@@ -1,7 +1,7 @@
 """
 S6.py — Source Code Documentation & Annotation via LLM (3-step pipeline)
 Workflow:
-  1. Read all Python source files under S6/data/src/
+  1. Read all Python source files under S6/case1/src/
   2. First LLM call (deepseek-chat):
     Analyze code only -> extract compact spec JSON
     (import list, module responsibilities, call graph, run order, project summary)
@@ -10,7 +10,7 @@ Workflow:
     (readme.md + requirements.txt + open_source_guide.md)
   4. Third LLM call (deepseek-reasoner):
     Original code + spec -> add inline comments -> results/src/
-  5. Save all files to S6/results/
+  5. Save all files to S6/case1/results/
 """
 
 import json
@@ -18,8 +18,8 @@ import os
 import glob
 from openai import OpenAI
 
-SRC_DIR    = "S6/data/src"
-OUTPUT_DIR = "S6/results"
+SRC_DIR    = "S6/case1/src"
+OUTPUT_DIR = "S6/case1/results"
 
 client = OpenAI(
     api_key="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ## Replace with your actual API key
