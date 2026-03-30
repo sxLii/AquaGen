@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show:*)",
+      "Bash(python -c \"import pyswmm\")",
+      "Bash(python -c \"from pyswmm import Simulation, Nodes, Links, Output, SimulationResults; print\\(''OK''\\)\")",
+      "Bash(python -c \"import pyswmm; print\\(dir\\(pyswmm\\)\\)\")",
+      "Bash(python -c \"from pyswmm import Simulation, Nodes, Links, Output; print\\(''pyswmm imports OK''\\)\")"
+    ]
+  }
+}

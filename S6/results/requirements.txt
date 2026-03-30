@@ -1,0 +1,10 @@
+# Core ML/Scientific Computing
+numpy>=1.20  # Numerical array operations and mathematical computations
+
+# Visualization
+matplotlib>=3.5  # Plotting and visualization of simulation results
+
+# Utilities (Standard Library - no pip install needed)
+# time: Timing and performance measurement
+# pathlib: Cross-platform file path handling
+# math: Mathematical functions and constants

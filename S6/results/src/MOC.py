@@ -1,0 +1,198 @@
+import time as timer
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# ── Main MOC Simulation ──
+# Reference solution for water hammer with instantaneous valve closure
+
+def simulate_instant_valve_closure():
+    """
+    Simulate water hammer in a pipeline using the Method of Characteristics (MOC)
+    under the assumption of instantaneous valve closure at the downstream end.
+
+    Main fixes compared with the original MATLAB script:
+    1. The initial steady-state head profile is made physically consistent.
+    2. Boundary conditions are computed from the previous time level, which is the
+       correct MOC update for this formulation.
+    3. The reference head line is plotted with the correct 1D shape.
+    """
+
+    # ── Physical Parameters ──
+    # Pipe geometry, material properties, and fluid characteristics
+    L = 300.0                    # Pipe length (m)
+    Hr = 70.0                    # Reservoir / pump head (m)
+    N = 100                       # Number of pipe reaches
+    NS = N + 1                   # Number of nodes
+    e = 0.001651                 # Wall thickness (m), 0.065 in
+    D = 0.00635 - 2.0 * e        # Inner diameter (m)
+    K = 2.1e9                    # Bulk modulus (Pa)
+    rho = 1000.0                 # Fluid density (kg/m^3)
+    E = 2.1e11                   # Young's modulus (Pa)
+    g = 9.806                    # Gravitational acceleration (m/s^2)
+    f = 0.018                    # Darcy-Weisbach friction factor (-)
+    area = np.pi * D**2 / 4.0    # Cross-sectional area (m^2)
+
+    # ── Grid and Time Discretization ──
+    # CFL condition ensures characteristics align with grid points
+    dx = L / N                   # Spatial step (m)
+    t_max = 20.0                 # Total simulation time (s)
+    # Wave speed accounting for fluid compressibility and pipe elasticity
+    a = np.sqrt(K / rho / (1.0 + K * D / (E * e)))  # Wave speed (m/s)
+    dt = dx / a                  # Time step from the Courant condition (s)
+
+    # ── MOC Constants ──
+    # Derived coefficients for characteristic equations
+    B = a / (g * area)
+    R = f * dx / (2.0 * g * D * area**2)
+
+    # ── Initial Conditions ──
+    # Steady flow before valve closure
+    u0 = 0.1                     # Initial velocity (m/s)
+
+    # Preallocate arrays
+    n_steps = int(np.ceil(t_max / dt)) + 1
+    time = np.zeros(n_steps)
+    Q = np.zeros((n_steps, NS))
+    H = np.zeros((n_steps, NS))
+
+    # Initial discharge at every node
+    Q[0, :] = area * u0
+
+    # Initial steady-state head profile along the pipe
+    # x = 0 at the upstream reservoir, x = L at the downstream valve
+    x = np.arange(NS) * dx
+    # Linear head loss due to friction (Darcy-Weisbach)
+    H[0, :] = Hr - f * x * u0**2 / (2.0 * g * D)
+    H[0, 0] = Hr  # Reservoir boundary condition
+
+    last_index = 0
+    for k in range(n_steps - 1):
+        # Interior nodes: Python indices 1..N-1 correspond to MATLAB 2..N
+        for j in range(1, N):
+            # Compute C+ and C- characteristics from adjacent nodes
+            CP = H[k, j - 1] + B * Q[k, j - 1] - R * Q[k, j - 1] * abs(Q[k, j - 1])
+            CM = H[k, j + 1] - B * Q[k, j + 1] + R * Q[k, j + 1] * abs(Q[k, j + 1])
+            
+            # Solve for H and Q at interior point using characteristic intersection
+            H[k + 1, j] = 0.5 * (CP + CM)
+            Q[k + 1, j] = (H[k + 1, j] - CM) / B
+
+        # Upstream boundary: constant head reservoir
+        # Use the previous time level for the characteristic coming from node 2.
+        CM = H[k, 1] - B * Q[k, 1] + R * Q[k, 1] * abs(Q[k, 1])
+        H[k + 1, 0] = Hr  # Fixed reservoir head
+        Q[k + 1, 0] = (H[k + 1, 0] - CM) / B
+
+        # Downstream boundary: instantaneous valve closure, so Q = 0
+        # Use the previous time level for the characteristic coming from node N.
+        CP = H[k, N - 1] + B * Q[k, N - 1] - R * Q[k, N - 1] * abs(Q[k, N - 1])
+        Q[k + 1, N] = 0.0  # Valve closed
+        H[k + 1, N] = CP  # Head determined by incoming characteristic
+
+        time[k + 1] = time[k] + dt
+        last_index = k + 1
+
+        if time[k + 1] >= t_max:
+            break
+
+    # Trim arrays to the actual simulated length
+    time = time[: last_index + 1]
+    Q = Q[: last_index + 1, :]
+    H = H[: last_index + 1, :]
+
+    return time, H, Q, dt, a
+
+
+# ── Parameterized MOC Solver ──
+# Returns comprehensive dictionary for method comparison
+
+def moc_solve(N=25):
+    """Run MOC and return results plus all physical parameters as a dict."""
+    # Physical parameters (same as simulate_instant_valve_closure but parameterized)
+    L = 300.0; Hr = 70.0; NS = N + 1
+    e = 0.001651; D = 0.00635 - 2.0 * e
+    K = 2.1e9; rho = 1000.0; E = 2.1e11
+    g = 9.806; f = 0.018
+    A = np.pi * D**2 / 4.0
+    dx = L / N; t_max = 20.0
+    a = np.sqrt(K / rho / (1.0 + K * D / (E * e)))
+    dt = dx / a; u0 = 0.1
+    B = a / (g * A); R = f * dx / (2.0 * g * D * A**2)
+    x = np.arange(NS) * dx
+
+    n_steps = int(np.ceil(t_max / dt)) + 1
+    time = np.zeros(n_steps)
+    H = np.zeros((n_steps, NS))
+    Q = np.zeros((n_steps, NS))
+
+    # Initial conditions
+    Q[0, :] = A * u0
+    H[0, :] = Hr - f * x * u0**2 / (2.0 * g * D)
+    H[0, 0] = Hr
+
+    last = 0
+    for k in range(n_steps - 1):
+        # Interior points
+        for j in range(1, N):
+            CP = H[k, j-1] + B * Q[k, j-1] - R * Q[k, j-1] * abs(Q[k, j-1])
+            CM = H[k, j+1] - B * Q[k, j+1] + R * Q[k, j+1] * abs(Q[k, j+1])
+            H[k+1, j] = 0.5 * (CP + CM)
+            Q[k+1, j] = (H[k+1, j] - CM) / B
+
+        # Boundaries
+        CM = H[k, 1] - B * Q[k, 1] + R * Q[k, 1] * abs(Q[k, 1])
+        H[k+1, 0] = Hr
+        Q[k+1, 0] = (H[k+1, 0] - CM) / B
+
+        CP = H[k, N-1] + B * Q[k, N-1] - R * Q[k, N-1] * abs(Q[k, N-1])
+        Q[k+1, N] = 0.0
+        H[k+1, N] = CP
+
+        time[k+1] = time[k] + dt
+        last = k + 1
+        if time[k+1] >= t_max:
+            break
+
+    # Return complete results dictionary for other methods to use
+    return {
+        "time": time[:last+1], "x": x, "H": H[:last+1], "Q": Q[:last+1],
+        "L": L, "Hr": Hr, "N": N, "NS": NS, "e": e, "D": D,
+        "K": K, "rho": rho, "E": E, "g": g, "f": f, "A": A,
+        "dx": dx, "t_max": t_max, "a": a, "dt": dt, "B": B, "R": R, "u0": u0,
+    }
+
+
+# ── Standalone Execution ──
+# Runs MOC and generates valve head plot
+
+def main():
+    start = timer.perf_counter()
+    time, H, Q, dt, a = simulate_instant_valve_closure()
+    elapsed = timer.perf_counter() - start
+
+    print(f"Computed wave speed a = {a:.6f} m/s")
+    print(f"Time step dt = {dt:.6e} s")
+    print(f"Number of time steps = {len(time)}")
+    print(f"Elapsed time = {elapsed:.6f} s")
+    
+    output_dir = Path("png")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figure_path = output_dir / "MOC_valve_head.png"
+    
+    plt.figure(figsize=(8, 5))
+    plt.plot(time, H[:, -1], label="Head at the closed valve")
+    plt.plot(time, np.full_like(time, 70.0), "--", label="Reservoir head")
+    plt.title("MOC Pressure Head Curve at the Valve")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Head (m)")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(figure_path, dpi=200)
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()

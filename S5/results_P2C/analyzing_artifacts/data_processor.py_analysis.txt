@@ -1,0 +1,239 @@
+# Logic Analysis: data_processor.py
+
+## **1. Purpose and Context**
+The `DataProcessor` class is the central data transformation module that converts raw SWMM simulation outputs into structured training/validation/test datasets for the physics-constrained gResNet surrogate model. It strictly implements the paper's data preprocessing methodology:
+
+### **Key Requirements from Paper:**
+- **State vectors (Eq. 7):** `x_t = [h_1...h_N, Q_1...Q_M]` where N = nodes, M = links
+- **Input vectors:** `R_t = [R_1...R_N]` runoff at each node (zero for non-inflow nodes)
+- **Min-max scaling:** Each variable (each h, each Q, each R) independently scaled to [0,1] using training data statistics
+- **Windowed training:** Sliding windows of size W (default 60 minutes) with autoregressive structure
+- **Mass balance computation (Eq. 8):** Computes excess flows `Q_w` as post-processing step using network adjacency
+
+## **2. Class Architecture and Dependencies**
+
+### **2.1 Dependencies**
+```
+Primary:
+- numpy: Array operations and numerical computations
+- scipy.sparse: Sparse matrix operations for network adjacency
+- sklearn.preprocessing: MinMaxScaler for per-variable scaling
+
+Secondary:
+- network_parser.py: Provides network topology and adjacency matrices
+- config.py: Configuration parameters (window size, scaling method)
+- utils.py: Potential helper functions for logging/validation
+```
+
+### **2.2 Data Flow**
+```
+Raw SWMM Output (DataFrame)
+    ↓
+create_state_vectors() → [h_1...h_N, Q_1...Q_M] (n_timesteps × (N+M))
+    ↓
+create_input_vectors() → [R_1...R_N] (n_timesteps × N)
+    ↓
+scale_data() → Min-max scaled arrays (training: fit=True, val/test: fit=False)
+    ↓
+create_windows() → Windowed sequences for autoregressive training
+    ↓
+compute_excess_flows() → Q_w via mass balance (post-processing)
+```
+
+## **3. Core Functionality Analysis**
+
+### **3.1 State Vector Creation (`create_state_vectors`)**
+**Input:** Raw SWMM DataFrame with columns:
+- Node water levels: `h_NodeID` (e.g., `h_1`, `h_2`, ..., `h_N`)
+- Link flows: `Q_LinkID` (e.g., `Q_1`, `Q_2`, ..., `Q_M`)
+
+**Processing Logic:**
+1. Extract node IDs and link IDs from `network_parser.get_node_data()` and `network_parser.get_link_data()`
+2. Validate all required columns exist in raw DataFrame
+3. Construct state matrix with **consistent ordering**:
+   - First N columns: Water levels in node order (e.g., nodes [1, 2, 3, 4, 5, 6] for Ji.inp)
+   - Next M columns: Flows in link order (e.g., links [1, 2, 3, 4, 5, 6] for Ji.inp)
+4. **Critical:** Handle missing values (should be none from SWMM) and ensure temporal alignment
+
+**Output:** `states_array` of shape `(n_timesteps, N+M)`
+
+### **3.2 Input Vector Creation (`create_input_vectors`)**
+**Input:** Inflow data dictionary/timeseries for each node
+
+**Processing Logic:**
+1. For each node in network (from `network_parser`), extract inflow time series
+2. Non-inflow nodes (no defined inflow in `[INFLOWS]`) get zero inflows
+3. **Note:** Ji.inp only has inflows at nodes 1 and 3 via `[INFLOWS]` section with timeseries `junc1` and `junc3`
+4. Must handle the case where inflow data has different temporal resolution than state data
+
+**Output:** `inputs_array` of shape `(n_timesteps, N)`
+
+### **3.3 Min-Max Scaling (`scale_data`)**
+**Paper Requirement:** "Scaling is performed using a min-max approach, and the scaling range is defined individually for each state variable, based on the minimum and maximum values observed in the HiFi simulations."
+
+**Implementation Strategy:**
+1. **Per-variable scaling:** Each column (each node's h, each link's Q, each node's R) scaled independently
+2. **Two-phase operation:**
+   - **Training phase (`fit=True`):** Compute min/max from training data, fit scalers, transform data
+   - **Validation/Test phase (`fit=False`):** Use pre-trained scalers to transform data
+3. **Scaler storage:** Must store scalers for:
+   - State variables: `(N+M)` scalers (or one scaler with `feature_range=(0,1)` for all)
+   - Input variables: `N` scalers
+4. **Zero-variance handling:** Variables with zero variance (constant values) require special handling (scale to 0 or 0.5)
+
+**Critical Decision:** Use `sklearn.preprocessing.MinMaxScaler(feature_range=(0,1))` with:
+- `fit_transform()` on training data
+- `transform()` on validation/test data
+- Save scaler parameters for inverse transformation during evaluation
+
+### **3.4 Window Creation (`create_windows`)**
+**Paper Context:** "The training series is divided into chunks (windows) that can be simulated in parallel."
+
+**Window Structure:**
+```
+Given: states[0:T], inputs[0:T], window_size W
+For each start time t from 0 to T-W:
+  Initial state: x_t = states[t]
+  Input sequence: R_t, R_{t+1}, ..., R_{t+W-1}
+  Target sequence: x_{t+1}, x_{t+2}, ..., x_{t+W}
+```
+
+**Implementation Logic:**
+1. **Input validation:** Ensure `states` and `inputs` have same number of timesteps
+2. **Window extraction:** Use sliding window with stride=1
+3. **Shape requirements:**
+   - `windowed_states`: `(n_windows, N+M)` initial states
+   - `windowed_inputs`: `(n_windows, W, N)` input sequences
+   - `windowed_targets`: `(n_windows, W, N+M)` target sequences
+4. **Memory considerations:** For large datasets, may need generator-based approach
+
+### **3.5 Excess Flow Computation (`compute_excess_flows`)**
+**Paper Requirement (Eq. 8):** `Q_w,i = max(∑_j Q_US,i,j - ∑_k Q_DS,i,k + R_i, 0)`
+
+**Implementation Strategy:**
+1. **Adjacency matrices from `network_parser`:**
+   - `upstream_matrix`: N × M binary matrix, `[i,j]=1` if link j is upstream of node i
+   - `downstream_matrix`: N × M binary matrix, `[i,j]=1` if link j is downstream of node i
+2. **Vectorized computation:**
+   ```
+   # For each timestep t:
+   Q_t = states[t, N:]  # Flows (M,)
+   R_t = inputs[t, :]   # Runoff (N,)
+   
+   upstream_inflows = upstream_matrix × Q_t  # (N,)
+   downstream_outflows = downstream_matrix × Q_t  # (N,)
+   
+   Q_w = max(upstream_inflows - downstream_outflows + R_t, 0)
+   ```
+3. **Sparse matrix optimization:** Use `scipy.sparse` operations for efficiency
+4. **Output shape:** `(n_timesteps, N)` excess flows for each node
+
+## **4. Edge Cases and Error Handling**
+
+### **4.1 Data Quality Issues**
+- **Missing values in SWMM output:** Replace with zeros or interpolate (paper doesn't specify)
+- **Zero-variance variables:** Handle during scaling (e.g., set to constant value)
+- **Temporal misalignment:** Ensure state and input arrays have same time index
+
+### **4.2 Network-Specific Considerations**
+- **Multiple inflow nodes:** Ji.inp only has nodes 1 and 3 with inflows
+- **No overflow structures in Ji.inp:** `Q_w` will only represent surcharges (no overflows)
+- **Small network size:** Only 6 nodes, 6 links → small state/input vectors
+
+### **4.3 Memory Management**
+- **Large window sizes:** For W=360 (6 hours), windows become large (360 × N+M)
+- **Sparse vs dense:** Adjacency matrices should remain sparse for efficiency
+- **Batch processing:** May need to process in chunks for very large datasets
+
+## **5. Configuration Alignment**
+
+### **5.1 From config.yaml:**
+```yaml
+data:
+  time_step: 60  # Δt = 1 minute in seconds
+  training_window_size: 60  # Default window size
+  scaling_method: "minmax"  # Must implement
+```
+
+### **5.2 Hard Requirements:**
+1. **Δt = 1 minute:** All processing assumes 1-minute temporal resolution
+2. **Empty system initialization:** Validation/test should start from empty system (all states = 0)
+3. **Event-based splits:** Must maintain event boundaries (not random temporal splits)
+
+## **6. Integration Points**
+
+### **6.1 With NetworkParser**
+- **Input:** Node/link IDs and ordering for consistent state vector construction
+- **Input:** Upstream/downstream adjacency matrices for mass balance computation
+- **Requirement:** Must use same node/link ordering as SWMM simulator
+
+### **6.2 With SWMMDataset**
+- **Output:** Windowed arrays ready for PyTorch DataLoader
+- **Requirement:** Maintain temporal sequence integrity
+- **Shape compatibility:** Output shapes must match dataset expectations
+
+### **6.3 With Evaluator**
+- **Input:** Scaling parameters for inverse transformation to physical units
+- **Input:** Network topology for spatial analysis of results
+- **Requirement:** Reproducible scaling (same parameters for training/validation/test)
+
+## **7. Validation and Testing Strategy**
+
+### **7.1 Unit Tests Required:**
+1. **State vector construction:** Verify correct ordering and dimensions
+2. **Scaling consistency:** Same data → same scaled values, inverse transformation recovers original
+3. **Window integrity:** Temporal sequence preserved, no data leakage between windows
+4. **Mass balance verification:** Computed Q_w matches SWMM output (where available)
+
+### **7.2 Integration Tests:**
+1. **End-to-end pipeline:** Raw SWMM → Processed Data → Model Input
+2. **Configuration changes:** Different window sizes produce expected shapes
+3. **Memory usage:** Handle maximum expected data volume (73,990 timesteps × 12 features)
+
+## **8. Critical Implementation Decisions**
+
+### **8.1 Scaler Design Choice:**
+**Option A:** One scaler per variable → Memory intensive but exact paper implementation
+**Option B:** One scaler for all h, one for all Q, one for all R → Memory efficient but approximate
+**Decision:** Implement Option A (per-variable) to strictly follow paper: "individually for each state variable"
+
+### **8.2 Window Overlap Strategy:**
+**Paper:** Windows start at each timestep (stride=1) for maximum training data
+**Implementation:** Must ensure windows don't cross event boundaries if events are concatenated
+
+### **8.3 Sparse Matrix Optimization:**
+**Requirement:** For networks with hundreds of nodes/links, use sparse operations
+**Implementation:** Store adjacency matrices as `scipy.sparse.csr_matrix` for efficient multiplication
+
+## **9. Performance Considerations**
+
+### **9.1 Computational Bottlenecks:**
+1. **Window creation:** O(T×W) operations for sliding window
+2. **Mass balance computation:** Sparse matrix multiplication O(N×M) per timestep
+3. **Scaling:** O(T×(N+M)) operations
+
+### **9.2 Memory Usage:**
+- **State array:** T × (N+M) × float64 ≈ 73,990 × 12 × 8 bytes ≈ 7 MB
+- **Windowed data:** n_windows × W × (N+M) × float64 ≈ 73,930 × 60 × 12 × 8 bytes ≈ 425 MB
+- **Scalers:** (N+M) × 2 × float64 ≈ 12 × 2 × 8 bytes ≈ 192 bytes
+
+### **9.3 Optimization Opportunities:**
+1. **Lazy evaluation:** Generate windows on-the-fly rather than pre-computing
+2. **Sparse operations:** Use sparse matrix multiplication for adjacency computations
+3. **Batch processing:** Process data in chunks for memory efficiency
+
+## **10. Paper Compliance Verification**
+
+### **10.1 Must Match Paper Exactly:**
+- [x] State vector format: `[h_1...h_N, Q_1...Q_M]` (Eq. 7)
+- [x] Input vector: `[R_1...R_N]` runoff at each node
+- [x] Min-max scaling per variable to [0,1]
+- [x] Windowed training with configurable window size
+- [x] Excess flow computation via mass balance (Eq. 8)
+
+### **10.2 Deviations to Note:**
+- **Limited network:** Ji.inp has only 6 nodes/links vs paper's 60-87
+- **No overflow structures:** Only surcharges computed, no separate overflow weirs
+- **Synthetic inflow data:** Must generate inflow events vs paper's observed rainfall
+
+This analysis provides the complete logic foundation for implementing `data_processor.py` that faithfully reproduces the paper's methodology while handling the specific constraints of the provided Ji.inp network file.

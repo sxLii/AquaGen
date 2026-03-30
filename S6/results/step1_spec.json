@@ -1,0 +1,179 @@
+{
+  "project_name": "Water Hammer Simulation Comparison",
+  "project_description": "This project compares different numerical methods for simulating water hammer (hydraulic transient) phenomena in pipelines. It implements Method of Characteristics (MOC) as the reference solution, then compares it against Finite Volume Method (FVM), Lattice Boltzmann Method (LBM), and Smoothed Particle Hydrodynamics (SPH) approaches. Each method simulates instantaneous valve closure in a pipe with friction.",
+  "problem_domain": "Hydraulic transients (water hammer) in pipelines with friction and boundary conditions",
+  "third_party_imports": [
+    {
+      "package": "numpy",
+      "pip_name": "numpy",
+      "version_hint": "≥1.20"
+    },
+    {
+      "package": "matplotlib",
+      "pip_name": "matplotlib",
+      "version_hint": "≥3.5"
+    },
+    {
+      "package": "matplotlib.pyplot",
+      "pip_name": "matplotlib",
+      "version_hint": "≥3.5"
+    }
+  ],
+  "stdlib_imports": [
+    "time",
+    "pathlib",
+    "math"
+  ],
+  "modules": [
+    {
+      "filename": "MOC.py",
+      "purpose": "Implements the Method of Characteristics reference solution for water hammer simulation",
+      "classes": [],
+      "key_functions": [
+        {
+          "name": "simulate_instant_valve_closure",
+          "role": "Main MOC simulation with detailed physical setup",
+          "inputs": "None",
+          "outputs": "time, H, Q, dt, a (time array, head matrix, discharge matrix, time step, wave speed)"
+        },
+        {
+          "name": "moc_solve",
+          "role": "Parameterized MOC solver returning comprehensive results dictionary",
+          "inputs": "N=25 (number of pipe reaches)",
+          "outputs": "Dictionary with time, H, Q arrays and all physical parameters"
+        }
+      ],
+      "imports_from": []
+    },
+    {
+      "filename": "FVM.py",
+      "purpose": "Implements Finite Volume Method aligned with MOC for water hammer simulation",
+      "classes": [],
+      "key_functions": [
+        {
+          "name": "moc_reference",
+          "role": "Retrieves MOC reference solution and metadata",
+          "inputs": "None",
+          "outputs": "time_ref, H_ref, Q_ref, meta (reference data and parameters)"
+        },
+        {
+          "name": "exact_linear_flux",
+          "role": "Computes exact linear flux for FVM scheme",
+          "inputs": "U_left, U_right, a, c_hq, c_qh (state vectors, wave speed, coefficients)",
+          "outputs": "Flux vector"
+        },
+        {
+          "name": "run_fvm_aligned",
+          "role": "Runs FVM simulation aligned with MOC parameters",
+          "inputs": "None",
+          "outputs": "time_hist, H, Q, meta_out, time_ref, H_ref, Q_ref (FVM results, metadata, reference data)"
+        }
+      ],
+      "imports_from": [
+        "MOC"
+      ]
+    },
+    {
+      "filename": "LBM.py",
+      "purpose": "Implements Lattice Boltzmann Method tuned for water hammer simulation",
+      "classes": [],
+      "key_functions": [
+        {
+          "name": "simulate_moc_reference",
+          "role": "Calls MOC reference and returns head and velocity",
+          "inputs": "None",
+          "outputs": "time_moc, head_moc, vel_moc (reference data)"
+        },
+        {
+          "name": "simulate_lbm_tuned",
+          "role": "Runs tuned LBM simulation with wave-like streaming and friction",
+          "inputs": "None",
+          "outputs": "time_hist, head_lbm, vel_lbm (LBM results)"
+        },
+        {
+          "name": "apply_wave_streaming",
+          "role": "Performs wave-like streaming of LBM populations",
+          "inputs": "f_plus, f_minus (LBM population arrays)",
+          "outputs": "f_plus_new, f_minus_new (streamed populations)"
+        },
+        {
+          "name": "apply_friction_source",
+          "role": "Applies Darcy-Weisbach friction source term",
+          "inputs": "v_lat (lattice velocity array)",
+          "outputs": "Updated lattice velocity array"
+        }
+      ],
+      "imports_from": [
+        "MOC"
+      ]
+    },
+    {
+      "filename": "SPH.py",
+      "purpose": "Implements Smoothed Particle Hydrodynamics aligned with MOC for water hammer",
+      "classes": [],
+      "key_functions": [
+        {
+          "name": "cubic_b_spline_w",
+          "role": "Computes 1D cubic B-spline kernel value",
+          "inputs": "r (distance), h (smoothing length)",
+          "outputs": "Kernel weight"
+        },
+        {
+          "name": "interpolate_shifted_characteristic",
+          "role": "SPH interpolation of shifted characteristic variables",
+          "inputs": "x_target, x_particles, values, shift, smoothing_length",
+          "outputs": "Interpolated value"
+        },
+        {
+          "name": "run_sph_aligned_with_moc",
+          "role": "Runs SPH simulation aligned with MOC parameters",
+          "inputs": "None",
+          "outputs": "Dictionary with SPH results, MOC reference, and error metrics"
+        }
+      ],
+      "imports_from": [
+        "MOC"
+      ]
+    }
+  ],
+  "workflow": [
+    {
+      "step": 1,
+      "action": "Run MOC reference simulation",
+      "module": "MOC.py",
+      "details": "moc_solve() computes reference solution with physical parameters: L=300m, Hr=70m, N=25, f=0.018, u0=0.1m/s, t_max=20s"
+    },
+    {
+      "step": 2,
+      "action": "Run comparative method (FVM/LBM/SPH)",
+      "module": "FVM.py/LBM.py/SPH.py",
+      "details": "Each method imports MOC reference, uses aligned parameters (dx, dt, a), and runs its own simulation"
+    },
+    {
+      "step": 3,
+      "action": "Compute error metrics",
+      "module": "All comparison modules",
+      "details": "Calculate relative L2 error and max absolute error for valve head history compared to MOC"
+    },
+    {
+      "step": 4,
+      "action": "Generate comparison plot",
+      "module": "All modules",
+      "details": "Save PNG plot comparing valve head history between method and MOC to png/ directory"
+    },
+    {
+      "step": 5,
+      "action": "Print performance and error statistics",
+      "module": "All modules",
+      "details": "Output wave speed, time step, error metrics, and elapsed time to console"
+    }
+  ],
+  "entry_point": "Multiple (each module has its own main() and can run independently)",
+  "cli_args": [],
+  "output_artifacts": [
+    "png/MOC_valve_head.png",
+    "png/fvm_vs_moc_valve_head.png",
+    "png/lbm_vs_moc_tuned_valve_head.png",
+    "png/sph_vs_moc_valve_head.png"
+  ]
+}

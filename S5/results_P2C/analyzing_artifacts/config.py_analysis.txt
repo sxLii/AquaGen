@@ -1,0 +1,187 @@
+# Logic Analysis for config.py
+
+## Overview
+The `config.py` file serves as the central configuration management module, translating the experimental setup from the paper into structured Python dataclasses. Based on the paper's methodology and the provided config.yaml, I'll analyze the required configuration structure.
+
+## Key Components from Paper Analysis
+
+### 1. **Data Configuration Essentials**
+From Section 2.1-2.3:
+- **Time step Δt**: 1 minute (60 seconds) for surrogate vs. 5 seconds for HiFi
+- **State vector**: `[h₁...hₙ, Q₁...Qₘ]` (water levels, pipe flows) per Eq. 7
+- **Input vector**: `[R₁...Rₙ]` (runoff at nodes)
+- **Training approach**: Windowed training with initialization from HiFi states
+- **Validation/Test**: Initialized from empty system
+- **Scaling**: Min-max [0,1] per variable, fit on training only
+
+### 2. **Model Architecture Requirements**
+From Section 2.2 and Table 1:
+- **Prior network L**: Single hidden layer (approximates dynamic mode decomposition)
+- **Residue network N**: Selected architecture S4 = 6 layers × 100 neurons
+- **Alternative sizes**: S1-S4 as per Table 1 for hyperparameter study
+- **Physical constraints**: Mass balance for Q_w (Eq. 8) with spilling configuration
+- **Activation**: ReLU throughout (standard per Section 2.4)
+
+### 3. **Training Procedure**
+From Section 2.3-2.4:
+- **Optimizer**: Adam with exponential decay from 1e-3 to 1e-4
+- **Epochs**: Up to 2000 with early stopping after 500 epochs no improvement
+- **Loss**: MSE on h, Q, Q_w with equal weighting after scaling
+- **Window size**: 60 minutes optimal (from Fig. 3)
+- **Multiple runs**: 5 random initializations per configuration
+- **Batch size**: Paper doesn't specify; likely full window batches
+
+## Dataclass Design Analysis
+
+### 1. **DataConfig**
+**Purpose**: Handle all data-related configurations
+
+**Critical fields needed:**
+- `inp_file`: Path to SWMM network file (must be "Ji.inp")
+- `time_step`: 60 seconds (1 minute Δt)
+- `simulation_time_step`: 5 seconds (HiFi fixed step)
+- `training_window_size`: 60 minutes (optimal from paper)
+- `window_sizes_tested`: [1, 10, 60, 120, 360] for hyperparameter study
+- `scaling_method`: "minmax" to [0,1] per variable
+- `state_vector_format`: ["h_nodes", "Q_links"] as per Eq. 7
+- `validation_split`: ~0.2 (must match paper's event-based split)
+- `test_split`: ~0.2 (fully independent series)
+
+**Logic constraints:**
+- Window size must be ≥ 1 (paper tests 1-360 minutes)
+- Time steps must convert to integer seconds
+- Scaling must be per-variable, not global
+- State vector order must match network parsing order
+
+### 2. **ModelConfig**
+**Purpose**: Define neural network architecture and physical constraints
+
+**Critical fields needed:**
+- `prior_network`: Single hidden layer (size unspecified in paper)
+- `residue_network`: S4 configuration (6×100)
+- `architecture_options`: Dictionary of S1-S4 for testing
+- `physical_constraints_enabled`: True for final model
+- `spilling_configuration`: True (water doesn't reenter)
+- `activation`: "relu" (paper's standard)
+
+**Logic constraints:**
+- Prior network hidden size should default to state dimension
+- Residue network must match S4 exactly for reproducibility
+- Physical constraints must compute Q_w via Eq. 8
+- Activation must be ReLU (no alternatives mentioned)
+
+### 3. **TrainingConfig**
+**Purpose**: Control training process and optimization
+
+**Critical fields needed:**
+- `optimizer`: "adam" with exponential LR decay
+- `learning_rate`: Start 1e-3, end 1e-4
+- `epochs`: 2000 maximum
+- `early_stopping`: Patience 500 epochs
+- `loss_weights`: Equal (1.0 each) for h, Q, Q_w
+- `batch_size`: 1 (paper uses window as batch)
+- `random_initializations`: 5 models per config
+- `window_initialization`: "true_state" for training, "empty_system" for validation
+
+**Logic constraints:**
+- LR decay must be exponential (not specified but implied)
+- Early stopping must monitor validation loss
+- Loss must be MSE with equal weighting after scaling
+- Multiple runs must use different random seeds
+
+### 4. **EvaluationConfig**
+**Purpose**: Define metrics and analysis methods
+
+**Critical fields needed:**
+- `metrics`: ["rmse", "r2", "volume_error"]
+- `event_based_analysis`: True (paper analyzes per event)
+- `spatial_analysis`: True (R² maps per node/link)
+- `benchmark_comparison`: True vs. SWMM
+
+**Logic constraints:**
+- RMSE must be in original units (m for h, m³/s for Q)
+- R² must be computed on unscaled data
+- Volume errors must compare totals (runoff, surcharge, etc.)
+
+### 5. **SystemConfig**
+**Purpose**: Set computational environment
+
+**Critical fields needed:**
+- `random_seed`: 42 (for reproducibility)
+- `device`: "cuda" if available (paper used CPU only)
+- `checkpoint_dir`: "checkpoints"
+- `results_dir`: "results"
+
+**Logic constraints:**
+- Must support deterministic behavior
+- GPU usage optional (paper found no benefit)
+
+## Configuration Validation Logic
+
+### Cross-checks required:
+1. **Window size compatibility**: Training window must divide training series evenly
+2. **Time step alignment**: Surrogate Δt must be multiple of HiFi time step
+3. **State vector dimensions**: Must match network topology from .inp file
+4. **Scaling consistency**: Same scalers must apply to all splits
+5. **Physical constraint validity**: Adjacency matrices must exist for mass balance
+
+### Default value rationale:
+1. **Prior network hidden size**: Paper doesn't specify; use state dimension
+2. **Batch size**: Paper doesn't specify; use 1 (window as batch)
+3. **Weight initialization**: Paper doesn't specify; use PyTorch defaults
+4. **Gradient clipping**: Not mentioned; omit
+5. **Normalization epsilon**: Small value to prevent division by zero
+
+## Implementation Strategy
+
+### 1. **Hierarchical Structure**
+```
+Config
+├── DataConfig
+├── ModelConfig
+├── TrainingConfig
+├── EvaluationConfig
+└── SystemConfig
+```
+
+### 2. **Type Safety**
+- Use `Literal` types for categorical options
+- Use `Optional` for fields that might be None
+- Use `List` and `Dict` with appropriate generic types
+- Add validation methods to each dataclass
+
+### 3. **Default Values**
+- Extract ALL defaults from config.yaml
+- Ensure defaults match paper's methodology
+- Document any deviations or assumptions
+
+### 4. **Configuration Loading**
+- Support YAML file loading
+- Support override via environment variables
+- Support programmatic modification
+
+## Critical Paper-to-Code Mappings
+
+### Time-related:
+- Paper's "1 min Δt" → `time_step: 60`
+- Paper's "5s HiFi step" → `simulation_time_step: 5`
+- Paper's "60 min window" → `training_window_size: 60`
+
+### Architecture:
+- Paper's "S4 network" → `residue_network: {"hidden_layers": 6, "hidden_units": 100}`
+- Paper's "ReLU" → `activation: "relu"`
+
+### Training:
+- Paper's "2000 epochs" → `epochs: 2000`
+- Paper's "500 patience" → `early_stopping_patience: 500`
+- Paper's "5 random seeds" → `random_initializations: 5`
+
+## Edge Cases to Handle
+
+1. **Zero-variance features**: Some nodes/links may have constant values
+2. **Missing overflow structures**: Ji.inp has no weirs; handle gracefully
+3. **Small network**: Only 6 pipes vs. paper's 60-87
+4. **Limited inflow data**: Only 10 minutes provided; need data generation strategy
+
+## Conclusion
+The `config.py` must faithfully translate the paper's experimental design into a structured, type-safe configuration system. Each parameter must be traceable to specific sections of the paper, with clear defaults and validation logic. The dataclass approach provides both clarity and type safety while maintaining flexibility for experimental variations.

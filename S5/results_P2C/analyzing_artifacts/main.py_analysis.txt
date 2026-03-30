@@ -1,0 +1,263 @@
+# Logic Analysis: main.py
+
+## 1. **Configuration Loading and System Setup**
+
+### **Critical Requirements from Paper & Config:**
+- **Random Seed**: Must be set for reproducibility (`system.random_seed: 42`)
+- **Device Selection**: Paper uses CPU (no GPU benefit mentioned), but config allows `"cuda"`
+- **Time Steps**: Δt = 60s (surrogate), 5s (HiFi SWMM simulation) - **MUST** be synchronized
+
+### **Logic Flow:**
+```
+1. Load YAML config → parse into structured dataclasses
+2. Set all random seeds (numpy, torch, python.random)
+3. Determine compute device (CPU recommended per paper, GPU optional)
+4. Create checkpoint and results directories
+```
+
+### **Key Design Decisions:**
+- Use `config.system.device` but note paper's CPU-only implementation
+- The surrogate time step (60s) **must** align with SWMM report step (currently 60s in Ji.inp)
+- SWMM routing step (15s in Ji.inp) must be ≤ 5s per paper - **MODIFICATION NEEDED**
+
+## 2. **Network Parsing**
+
+### **Critical Requirements from Paper:**
+- Extract: nodes (junctions + outfalls), links (conduits), cross-sections
+- Identify inflow nodes from `[INFLOWS]` section
+- Build adjacency matrices for mass balance calculations
+
+### **Data from Ji.inp:**
+- **Nodes**: 4 junctions (1, 2, 3, 5), 2 outfalls (4, 6) → **6 nodes total**
+- **Links**: 6 conduits (1-6) → **6 links total**
+- **Inflows**: Nodes 1 & 3 have `[INFLOWS]` defined
+- **No overflow structures**: Unlike paper's System 1 (weir at node 27793)
+
+### **Logic Flow:**
+```
+1. Parse SWMM .inp sections: [JUNCTIONS], [OUTFALLS], [CONDUITS], [XSECTIONS], [INFLOWS]
+2. Create node DataFrame: ID, elevation, max_depth, type (junction/outfall)
+3. Create link DataFrame: ID, from_node, to_node, length, roughness, diameter
+4. Build sparse adjacency matrices:
+   - upstream_matrix[node, link] = 1 if link ends at node
+   - downstream_matrix[node, link] = 1 if link starts at node
+```
+
+### **Key Design Decisions:**
+- Must handle circular pipes only (all in Ji.inp)
+- Note: Network is smaller (6 pipes) vs. paper (60-87 pipes) - **scalability limitation**
+- No overflow structures present - can only simulate surcharges
+
+## 3. **Data Generation via SWMM Simulations**
+
+### **Critical Requirements from Paper:**
+- **HiFi settings**: 5s time step, spilling configuration
+- **Training data volume**: ~74k timesteps (series A/B)
+- **Three independent series**: training, validation, testing
+- **Event-based splitting**: Not random temporal split
+
+### **Problem: Insufficient Data in Ji.inp**
+Current Ji.inp has only 10 minutes (10 timesteps) of inflow data at 2 nodes.
+
+### **Logic Flow for Data Generation:**
+```
+1. Extract base inflow patterns from Ji.inp TIMESERIES (nodes 1 & 3)
+2. Generate synthetic but physically plausible inflow events:
+   - Vary intensity (scaling), duration, temporal pattern
+   - Create multiple events to reach ~70k+ timesteps
+   - Ensure diverse conditions (low flow, high flow, surcharge)
+3. Run SWMM simulations for each event:
+   - Modify INFLOWS section in .inp for each event
+   - Set REPORT_STEP = 60s, ROUTING_STEP = 5s
+   - Enable spilling (ponding area = 0)
+4. Extract at 60s intervals: h_nodes (6), Q_links (6), Q_w (6)
+5. Split into three independent series by event (not by time)
+```
+
+### **Key Design Decisions:**
+- **Synthetic data generation** is necessary but deviates from paper
+- Must maintain physical plausibility (unit consistency, mass conservation)
+- Use SWMM's "ponding" option = NO for spilling configuration
+- Generate separate events for train/val/test with different statistical properties
+
+## 4. **Data Processing and Windowing**
+
+### **Critical Requirements from Paper:**
+- **State vector**: x_t = [h_1..h_N, Q_1..Q_M] (Eq. 7) - **excludes Q_w**
+- **Input vector**: R_t = [R_1..R_N] (runoff at all nodes, 0 for non-inflow nodes)
+- **Min-max scaling**: Each variable independently to [0,1] using training data only
+- **Window creation**: Size = 60 minutes (3600s = 60 timesteps at Δt=60s)
+
+### **Logic Flow:**
+```
+1. Construct state arrays from SWMM results:
+   - states[t, :] = [h_nodes(t), Q_links(t)] → shape: (T, N+M)
+   - inputs[t, :] = [R_nodes(t)] → shape: (T, N)
+   
+2. Scale data:
+   - Fit scalers on training states/inputs (compute min,max per variable)
+   - Apply same scalers to validation/test
+   
+3. Create training windows:
+   - window_states[t:t+W-1, :], window_inputs[t:t+W-1, :]
+   - target_states[t+1:t+W, :]
+   - Stride = 1 (overlapping windows)
+   
+4. Compute Q_w from mass balance (for loss calculation):
+   Q_w,i = max(∑Q_upstream - ∑Q_downstream + R_i, 0)
+```
+
+### **Key Design Decisions:**
+- Window size W = 60 (from config) for final model
+- Windows overlap (stride=1) to maximize training data
+- Q_w computed post-hoc, not included in state vector
+- Validation/test use full series (not windowed) starting from empty system
+
+## 5. **Dataset Creation**
+
+### **Critical Requirements:**
+- Training: Windowed approach with true initialization
+- Validation/Testing: Full series with empty system initialization
+
+### **Logic Flow:**
+```
+1. Training Dataset:
+   - SWMMDataset(windowed_states, windowed_inputs, windowed_targets)
+   - Each sample: (x_t, R_t:t+W-1, x_t+1:t+W)
+   
+2. Validation/Test Data:
+   - Store as raw arrays (not windowed)
+   - Initial state: all h=0, Q=0 (empty system)
+   - Run autoregressively during evaluation
+```
+
+## 6. **Model Initialization**
+
+### **Critical Requirements from Paper:**
+- **Prior Network L**: Single hidden layer, size unspecified
+- **Residue Network N**: S4 architecture = 6 layers × 100 neurons
+- **Constraint Layer**: Implements Eq. 8 mass balance
+- **Activation**: ReLU throughout
+
+### **Model Architecture:**
+```
+gResNet.forward(x_t, R_t):
+  1. L_network(x_t) → prior_pred [N+M]
+  2. N_network(concat(x_t, R_t)) → residue [N+M]
+  3. x_pred = prior_pred + residue
+  4. Split x_pred into h_pred [N], Q_pred [M]
+  5. Q_w_pred = ConstraintLayer(Q_pred, R_t, adjacency)
+  6. Return (h_pred, Q_pred, Q_w_pred)
+```
+
+### **Key Design Decisions:**
+- Prior network L: Use hidden size = N+M (state dimension) as reasonable default
+- Residue network N: Exactly 6 layers with 100 neurons each, ReLU activation
+- Constraint layer is differentiable (gradients flow through Q_pred)
+- No trainable parameters in constraint layer
+
+## 7. **Training Procedure**
+
+### **Critical Requirements from Paper:**
+- **Optimizer**: Adam with LR decay (1e-3 → 1e-4 exponential)
+- **Epochs**: 2000 max, early stopping after 500 epochs no improvement
+- **Loss**: MSE on scaled h, Q, Q_w with equal weights
+- **Batch size**: Not specified - use window as batch (batch_size=1 in config)
+
+### **Logic Flow:**
+```
+For each epoch:
+  1. Training:
+     - For each window in training dataset:
+       - Forward pass: model(x_t, R_t)
+       - Compute loss = MSE(h_pred, h_true) + MSE(Q_pred, Q_true) + MSE(Q_w_pred, Q_w_true)
+       - Backward pass, update parameters
+     
+  2. Validation:
+     - Initialize from empty system (h=0, Q=0)
+     - Run autoregressively through entire validation series
+     - Compute validation loss (same MSE formula)
+     
+  3. Early stopping:
+     - Track best validation loss
+     - Stop if no improvement for 500 epochs
+     
+  4. LR scheduling:
+     - Exponential decay from 1e-3 to 1e-4 over 2000 epochs
+```
+
+### **Key Design Decisions:**
+- Use window as batch (batch_size=1) - each window processed independently
+- Early stopping based on full autoregressive validation (not windowed)
+- Run 5 independent trainings with different random seeds
+- Save checkpoints for best model
+
+## 8. **Evaluation and Results**
+
+### **Critical Requirements from Paper:**
+- **Metrics**: RMSE (unscaled), R², volume errors
+- **Event-based analysis**: By outlet peak flow
+- **Spatial analysis**: R² per node/link
+- **Performance**: Training time, inference time, speed-up vs SWMM
+
+### **Logic Flow:**
+```
+1. Test Evaluation:
+   - Initialize from empty system
+   - Run autoregressively through test series
+   - Unscale predictions
+   
+2. Compute Metrics:
+   - RMSE: per variable type (h, Q, Q_w)
+   - R²: per node/link, spatial distribution
+   - Volume errors: ∑R, ∑Q_w, ∑Q_out
+   
+3. Generate Plots:
+   - Time series for selected nodes/links
+   - Spatial R² heatmap
+   - Event-based RMSE vs outlet peak flow
+   
+4. Benchmark:
+   - SWMM simulation time (5s time step)
+   - Surrogate inference time (60s time step)
+   - Compute speed-up factor
+```
+
+## 9. **Critical Implementation Challenges**
+
+### **Challenge 1: Insufficient Training Data**
+**Solution**: Generate synthetic inflow events by:
+- Scaling base pattern (0.1x to 10x intensity)
+- Varying duration (1-120 minutes)
+- Adding temporal offsets and patterns
+- Ensuring physical plausibility (non-negative, unit consistency)
+
+### **Challenge 2: No Overflow Structures**
+**Impact**: Cannot replicate paper's overflow vs surcharge distinction
+**Solution**: Focus on surcharge simulation only, note limitation in results
+
+### **Challenge 3: Small Network Size**
+**Impact**: May not demonstrate scalability claims
+**Solution**: Implement architecture for arbitrary N,M, test on provided network
+
+### **Challenge 4: SWMM Configuration**
+**Required modifications to Ji.inp**:
+- `ROUTING_STEP 00:00:05` (not 00:00:15)
+- `REPORT_STEP 00:01:00` (correct)
+- Ensure spilling: `ALLOW_PONDING NO` (correct)
+
+## 10. **Expected Outputs and Validation**
+
+### **Quantitative Targets from Paper:**
+- R² > 0.9 for h and Q in most elements
+- RMSE: few cm for h, few L/s for Q
+- Speed-up: 10-100× vs SWMM
+- Training time: ~1 hour
+
+### **Validation Steps:**
+1. Verify mass conservation in constraint layer
+2. Check gradient flow through entire model
+3. Validate scaling preserves variable relationships
+4. Confirm autoregressive stability (no divergence)
+
+This logic analysis provides the foundation for implementing `main.py` that faithfully reproduces the paper's methodology while addressing the constraints of the provided Ji.inp file.

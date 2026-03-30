@@ -1,0 +1,1730 @@
+[
+  {
+    "Date_time": "01-Feb-2000 00:00:00",
+    "Tank1_Depth": "1.0050",
+    "CSO8_Depth": "0.0394",
+    "C14_Flow": "0.1114"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:05:00",
+    "Tank1_Depth": "1.0159",
+    "CSO8_Depth": "0.0396",
+    "C14_Flow": "0.1123"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:10:00",
+    "Tank1_Depth": "1.0267",
+    "CSO8_Depth": "0.0398",
+    "C14_Flow": "0.1132"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:15:00",
+    "Tank1_Depth": "1.0374",
+    "CSO8_Depth": "0.0400",
+    "C14_Flow": "0.1141"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:20:00",
+    "Tank1_Depth": "1.0480",
+    "CSO8_Depth": "0.0402",
+    "C14_Flow": "0.1150"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:25:00",
+    "Tank1_Depth": "1.0585",
+    "CSO8_Depth": "0.0404",
+    "C14_Flow": "0.1159"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:30:00",
+    "Tank1_Depth": "1.0689",
+    "CSO8_Depth": "0.0406",
+    "C14_Flow": "0.1168"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:35:00",
+    "Tank1_Depth": "1.0791",
+    "CSO8_Depth": "0.0408",
+    "C14_Flow": "0.1177"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:40:00",
+    "Tank1_Depth": "1.0892",
+    "CSO8_Depth": "0.0410",
+    "C14_Flow": "0.1186"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:45:00",
+    "Tank1_Depth": "1.0992",
+    "CSO8_Depth": "0.0412",
+    "C14_Flow": "0.1195"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:50:00",
+    "Tank1_Depth": "1.1090",
+    "CSO8_Depth": "0.0414",
+    "C14_Flow": "0.1204"
+  },
+  {
+    "Date_time": "01-Feb-2000 00:55:00",
+    "Tank1_Depth": "1.1187",
+    "CSO8_Depth": "0.0416",
+    "C14_Flow": "0.1213"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:00:00",
+    "Tank1_Depth": "1.1283",
+    "CSO8_Depth": "0.0418",
+    "C14_Flow": "0.1222"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:05:00",
+    "Tank1_Depth": "1.1377",
+    "CSO8_Depth": "0.0420",
+    "C14_Flow": "0.1231"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:10:00",
+    "Tank1_Depth": "1.1470",
+    "CSO8_Depth": "0.0422",
+    "C14_Flow": "0.1240"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:15:00",
+    "Tank1_Depth": "1.1561",
+    "CSO8_Depth": "0.0424",
+    "C14_Flow": "0.1249"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:20:00",
+    "Tank1_Depth": "1.1651",
+    "CSO8_Depth": "0.0426",
+    "C14_Flow": "0.1258"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:25:00",
+    "Tank1_Depth": "1.1739",
+    "CSO8_Depth": "0.0428",
+    "C14_Flow": "0.1267"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:30:00",
+    "Tank1_Depth": "1.1826",
+    "CSO8_Depth": "0.0430",
+    "C14_Flow": "0.1276"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:35:00",
+    "Tank1_Depth": "1.1911",
+    "CSO8_Depth": "0.0432",
+    "C14_Flow": "0.1285"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:40:00",
+    "Tank1_Depth": "1.1995",
+    "CSO8_Depth": "0.0434",
+    "C14_Flow": "0.1294"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:45:00",
+    "Tank1_Depth": "1.2077",
+    "CSO8_Depth": "0.0436",
+    "C14_Flow": "0.1303"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:50:00",
+    "Tank1_Depth": "1.2158",
+    "CSO8_Depth": "0.0438",
+    "C14_Flow": "0.1312"
+  },
+  {
+    "Date_time": "01-Feb-2000 01:55:00",
+    "Tank1_Depth": "1.2237",
+    "CSO8_Depth": "0.0440",
+    "C14_Flow": "0.1321"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:00:00",
+    "Tank1_Depth": "1.2314",
+    "CSO8_Depth": "0.0442",
+    "C14_Flow": "0.1330"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:05:00",
+    "Tank1_Depth": "1.2390",
+    "CSO8_Depth": "0.0444",
+    "C14_Flow": "0.1339"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:10:00",
+    "Tank1_Depth": "1.2464",
+    "CSO8_Depth": "0.0446",
+    "C14_Flow": "0.1348"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:15:00",
+    "Tank1_Depth": "1.2537",
+    "CSO8_Depth": "0.0448",
+    "C14_Flow": "0.1357"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:20:00",
+    "Tank1_Depth": "1.2608",
+    "CSO8_Depth": "0.0450",
+    "C14_Flow": "0.1366"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:25:00",
+    "Tank1_Depth": "1.2677",
+    "CSO8_Depth": "0.0452",
+    "C14_Flow": "0.1375"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:30:00",
+    "Tank1_Depth": "1.2745",
+    "CSO8_Depth": "0.0454",
+    "C14_Flow": "0.1384"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:35:00",
+    "Tank1_Depth": "1.2811",
+    "CSO8_Depth": "0.0456",
+    "C14_Flow": "0.1393"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:40:00",
+    "Tank1_Depth": "1.2876",
+    "CSO8_Depth": "0.0458",
+    "C14_Flow": "0.1402"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:45:00",
+    "Tank1_Depth": "1.2939",
+    "CSO8_Depth": "0.0460",
+    "C14_Flow": "0.1411"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:50:00",
+    "Tank1_Depth": "1.3000",
+    "CSO8_Depth": "0.0462",
+    "C14_Flow": "0.1420"
+  },
+  {
+    "Date_time": "01-Feb-2000 02:55:00",
+    "Tank1_Depth": "1.3060",
+    "CSO8_Depth": "0.0464",
+    "C14_Flow": "0.1429"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:00:00",
+    "Tank1_Depth": "1.3118",
+    "CSO8_Depth": "0.0466",
+    "C14_Flow": "0.1438"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:05:00",
+    "Tank1_Depth": "1.3174",
+    "CSO8_Depth": "0.0468",
+    "C14_Flow": "0.1447"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:10:00",
+    "Tank1_Depth": "1.3229",
+    "CSO8_Depth": "0.0470",
+    "C14_Flow": "0.1456"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:15:00",
+    "Tank1_Depth": "1.3282",
+    "CSO8_Depth": "0.0472",
+    "C14_Flow": "0.1465"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:20:00",
+    "Tank1_Depth": "1.3333",
+    "CSO8_Depth": "0.0474",
+    "C14_Flow": "0.1474"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:25:00",
+    "Tank1_Depth": "1.3383",
+    "CSO8_Depth": "0.0476",
+    "C14_Flow": "0.1483"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:30:00",
+    "Tank1_Depth": "1.3431",
+    "CSO8_Depth": "0.0478",
+    "C14_Flow": "0.1492"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:35:00",
+    "Tank1_Depth": "1.3478",
+    "CSO8_Depth": "0.0480",
+    "C14_Flow": "0.1501"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:40:00",
+    "Tank1_Depth": "1.3523",
+    "CSO8_Depth": "0.0482",
+    "C14_Flow": "0.1510"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:45:00",
+    "Tank1_Depth": "1.3566",
+    "CSO8_Depth": "0.0484",
+    "C14_Flow": "0.1519"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:50:00",
+    "Tank1_Depth": "1.3608",
+    "CSO8_Depth": "0.0486",
+    "C14_Flow": "0.1528"
+  },
+  {
+    "Date_time": "01-Feb-2000 03:55:00",
+    "Tank1_Depth": "1.3648",
+    "CSO8_Depth": "0.0488",
+    "C14_Flow": "0.1537"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:00:00",
+    "Tank1_Depth": "1.3686",
+    "CSO8_Depth": "0.0490",
+    "C14_Flow": "0.1546"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:05:00",
+    "Tank1_Depth": "1.3723",
+    "CSO8_Depth": "0.0492",
+    "C14_Flow": "0.1555"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:10:00",
+    "Tank1_Depth": "1.3758",
+    "CSO8_Depth": "0.0494",
+    "C14_Flow": "0.1564"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:15:00",
+    "Tank1_Depth": "1.3792",
+    "CSO8_Depth": "0.0496",
+    "C14_Flow": "0.1573"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:20:00",
+    "Tank1_Depth": "1.3824",
+    "CSO8_Depth": "0.0498",
+    "C14_Flow": "0.1582"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:25:00",
+    "Tank1_Depth": "1.3854",
+    "CSO8_Depth": "0.0500",
+    "C14_Flow": "0.1591"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:30:00",
+    "Tank1_Depth": "1.3883",
+    "CSO8_Depth": "0.0502",
+    "C14_Flow": "0.1600"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:35:00",
+    "Tank1_Depth": "1.3910",
+    "CSO8_Depth": "0.0504",
+    "C14_Flow": "0.1609"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:40:00",
+    "Tank1_Depth": "1.3936",
+    "CSO8_Depth": "0.0506",
+    "C14_Flow": "0.1618"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:45:00",
+    "Tank1_Depth": "1.3960",
+    "CSO8_Depth": "0.0508",
+    "C14_Flow": "0.1627"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:50:00",
+    "Tank1_Depth": "1.3982",
+    "CSO8_Depth": "0.0510",
+    "C14_Flow": "0.1636"
+  },
+  {
+    "Date_time": "01-Feb-2000 04:55:00",
+    "Tank1_Depth": "1.4003",
+    "CSO8_Depth": "0.0512",
+    "C14_Flow": "0.1645"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:00:00",
+    "Tank1_Depth": "1.4022",
+    "CSO8_Depth": "0.0514",
+    "C14_Flow": "0.1654"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:05:00",
+    "Tank1_Depth": "1.4040",
+    "CSO8_Depth": "0.0516",
+    "C14_Flow": "0.1663"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:10:00",
+    "Tank1_Depth": "1.4056",
+    "CSO8_Depth": "0.0518",
+    "C14_Flow": "0.1672"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:15:00",
+    "Tank1_Depth": "1.4071",
+    "CSO8_Depth": "0.0520",
+    "C14_Flow": "0.1681"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:20:00",
+    "Tank1_Depth": "1.4084",
+    "CSO8_Depth": "0.0522",
+    "C14_Flow": "0.1690"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:25:00",
+    "Tank1_Depth": "1.4096",
+    "CSO8_Depth": "0.0524",
+    "C14_Flow": "0.1699"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:30:00",
+    "Tank1_Depth": "1.4106",
+    "CSO8_Depth": "0.0526",
+    "C14_Flow": "0.1708"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:35:00",
+    "Tank1_Depth": "1.4115",
+    "CSO8_Depth": "0.0528",
+    "C14_Flow": "0.1717"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:40:00",
+    "Tank1_Depth": "1.4122",
+    "CSO8_Depth": "0.0530",
+    "C14_Flow": "0.1726"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:45:00",
+    "Tank1_Depth": "1.4128",
+    "CSO8_Depth": "0.0532",
+    "C14_Flow": "0.1735"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:50:00",
+    "Tank1_Depth": "1.4132",
+    "CSO8_Depth": "0.0534",
+    "C14_Flow": "0.1744"
+  },
+  {
+    "Date_time": "01-Feb-2000 05:55:00",
+    "Tank1_Depth": "1.4135",
+    "CSO8_Depth": "0.0536",
+    "C14_Flow": "0.1753"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:00:00",
+    "Tank1_Depth": "1.4136",
+    "CSO8_Depth": "0.0538",
+    "C14_Flow": "0.1762"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:05:00",
+    "Tank1_Depth": "1.4136",
+    "CSO8_Depth": "0.0540",
+    "C14_Flow": "0.1771"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:10:00",
+    "Tank1_Depth": "1.4134",
+    "CSO8_Depth": "0.0542",
+    "C14_Flow": "0.1780"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:15:00",
+    "Tank1_Depth": "1.4131",
+    "CSO8_Depth": "0.0544",
+    "C14_Flow": "0.1789"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:20:00",
+    "Tank1_Depth": "1.4127",
+    "CSO8_Depth": "0.0546",
+    "C14_Flow": "0.1798"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:25:00",
+    "Tank1_Depth": "1.4121",
+    "CSO8_Depth": "0.0548",
+    "C14_Flow": "0.1807"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:30:00",
+    "Tank1_Depth": "1.4114",
+    "CSO8_Depth": "0.0550",
+    "C14_Flow": "0.1816"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:35:00",
+    "Tank1_Depth": "1.4105",
+    "CSO8_Depth": "0.0552",
+    "C14_Flow": "0.1825"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:40:00",
+    "Tank1_Depth": "1.4095",
+    "CSO8_Depth": "0.0554",
+    "C14_Flow": "0.1834"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:45:00",
+    "Tank1_Depth": "1.4083",
+    "CSO8_Depth": "0.0556",
+    "C14_Flow": "0.1843"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:50:00",
+    "Tank1_Depth": "1.4070",
+    "CSO8_Depth": "0.0558",
+    "C14_Flow": "0.1852"
+  },
+  {
+    "Date_time": "01-Feb-2000 06:55:00",
+    "Tank1_Depth": "1.4056",
+    "CSO8_Depth": "0.0560",
+    "C14_Flow": "0.1861"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:00:00",
+    "Tank1_Depth": "1.4040",
+    "CSO8_Depth": "0.0562",
+    "C14_Flow": "0.1870"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:05:00",
+    "Tank1_Depth": "1.4023",
+    "CSO8_Depth": "0.0564",
+    "C14_Flow": "0.1879"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:10:00",
+    "Tank1_Depth": "1.4005",
+    "CSO8_Depth": "0.0566",
+    "C14_Flow": "0.1888"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:15:00",
+    "Tank1_Depth": "1.3985",
+    "CSO8_Depth": "0.0568",
+    "C14_Flow": "0.1897"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:20:00",
+    "Tank1_Depth": "1.3964",
+    "CSO8_Depth": "0.0570",
+    "C14_Flow": "0.1906"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:25:00",
+    "Tank1_Depth": "1.3942",
+    "CSO8_Depth": "0.0572",
+    "C14_Flow": "0.1915"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:30:00",
+    "Tank1_Depth": "1.3918",
+    "CSO8_Depth": "0.0574",
+    "C14_Flow": "0.1924"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:35:00",
+    "Tank1_Depth": "1.3893",
+    "CSO8_Depth": "0.0576",
+    "C14_Flow": "0.1933"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:40:00",
+    "Tank1_Depth": "1.3867",
+    "CSO8_Depth": "0.0578",
+    "C14_Flow": "0.1942"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:45:00",
+    "Tank1_Depth": "1.3839",
+    "CSO8_Depth": "0.0580",
+    "C14_Flow": "0.1951"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:50:00",
+    "Tank1_Depth": "1.3810",
+    "CSO8_Depth": "0.0582",
+    "C14_Flow": "0.1960"
+  },
+  {
+    "Date_time": "01-Feb-2000 07:55:00",
+    "Tank1_Depth": "1.3780",
+    "CSO8_Depth": "0.0584",
+    "C14_Flow": "0.1969"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:00:00",
+    "Tank1_Depth": "1.3749",
+    "CSO8_Depth": "0.0586",
+    "C14_Flow": "0.1978"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:05:00",
+    "Tank1_Depth": "1.3716",
+    "CSO8_Depth": "0.0588",
+    "C14_Flow": "0.1987"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:10:00",
+    "Tank1_Depth": "1.3682",
+    "CSO8_Depth": "0.0590",
+    "C14_Flow": "0.1996"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:15:00",
+    "Tank1_Depth": "1.3647",
+    "CSO8_Depth": "0.0592",
+    "C14_Flow": "0.2005"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:20:00",
+    "Tank1_Depth": "1.3611",
+    "CSO8_Depth": "0.0594",
+    "C14_Flow": "0.2014"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:25:00",
+    "Tank1_Depth": "1.3573",
+    "CSO8_Depth": "0.0596",
+    "C14_Flow": "0.2023"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:30:00",
+    "Tank1_Depth": "1.3535",
+    "CSO8_Depth": "0.0598",
+    "C14_Flow": "0.2032"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:35:00",
+    "Tank1_Depth": "1.3495",
+    "CSO8_Depth": "0.0600",
+    "C14_Flow": "0.2041"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:40:00",
+    "Tank1_Depth": "1.3454",
+    "CSO8_Depth": "0.0602",
+    "C14_Flow": "0.2050"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:45:00",
+    "Tank1_Depth": "1.3412",
+    "CSO8_Depth": "0.0604",
+    "C14_Flow": "0.2059"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:50:00",
+    "Tank1_Depth": "1.3369",
+    "CSO8_Depth": "0.0606",
+    "C14_Flow": "0.2068"
+  },
+  {
+    "Date_time": "01-Feb-2000 08:55:00",
+    "Tank1_Depth": "1.3325",
+    "CSO8_Depth": "0.0608",
+    "C14_Flow": "0.2077"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:00:00",
+    "Tank1_Depth": "1.3280",
+    "CSO8_Depth": "0.0610",
+    "C14_Flow": "0.2086"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:05:00",
+    "Tank1_Depth": "1.3233",
+    "CSO8_Depth": "0.0612",
+    "C14_Flow": "0.2095"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:10:00",
+    "Tank1_Depth": "1.3186",
+    "CSO8_Depth": "0.0614",
+    "C14_Flow": "0.2104"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:15:00",
+    "Tank1_Depth": "1.3137",
+    "CSO8_Depth": "0.0616",
+    "C14_Flow": "0.2113"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:20:00",
+    "Tank1_Depth": "1.3088",
+    "CSO8_Depth": "0.0618",
+    "C14_Flow": "0.2122"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:25:00",
+    "Tank1_Depth": "1.3037",
+    "CSO8_Depth": "0.0620",
+    "C14_Flow": "0.2131"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:30:00",
+    "Tank1_Depth": "1.2986",
+    "CSO8_Depth": "0.0622",
+    "C14_Flow": "0.2140"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:35:00",
+    "Tank1_Depth": "1.2933",
+    "CSO8_Depth": "0.0624",
+    "C14_Flow": "0.2149"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:40:00",
+    "Tank1_Depth": "1.2880",
+    "CSO8_Depth": "0.0626",
+    "C14_Flow": "0.2158"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:45:00",
+    "Tank1_Depth": "1.2825",
+    "CSO8_Depth": "0.0628",
+    "C14_Flow": "0.2167"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:50:00",
+    "Tank1_Depth": "1.2770",
+    "CSO8_Depth": "0.0630",
+    "C14_Flow": "0.2176"
+  },
+  {
+    "Date_time": "01-Feb-2000 09:55:00",
+    "Tank1_Depth": "1.2713",
+    "CSO8_Depth": "0.0632",
+    "C14_Flow": "0.2185"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:00:00",
+    "Tank1_Depth": "1.2656",
+    "CSO8_Depth": "0.0634",
+    "C14_Flow": "0.2194"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:05:00",
+    "Tank1_Depth": "1.2598",
+    "CSO8_Depth": "0.0636",
+    "C14_Flow": "0.2203"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:10:00",
+    "Tank1_Depth": "1.2538",
+    "CSO8_Depth": "0.0638",
+    "C14_Flow": "0.2212"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:15:00",
+    "Tank1_Depth": "1.2478",
+    "CSO8_Depth": "0.0640",
+    "C14_Flow": "0.2221"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:20:00",
+    "Tank1_Depth": "1.2417",
+    "CSO8_Depth": "0.0642",
+    "C14_Flow": "0.2230"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:25:00",
+    "Tank1_Depth": "1.2355",
+    "CSO8_Depth": "0.0644",
+    "C14_Flow": "0.2239"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:30:00",
+    "Tank1_Depth": "1.2292",
+    "CSO8_Depth": "0.0646",
+    "C14_Flow": "0.2248"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:35:00",
+    "Tank1_Depth": "1.2228",
+    "CSO8_Depth": "0.0648",
+    "C14_Flow": "0.2257"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:40:00",
+    "Tank1_Depth": "1.2164",
+    "CSO8_Depth": "0.0650",
+    "C14_Flow": "0.2266"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:45:00",
+    "Tank1_Depth": "1.2098",
+    "CSO8_Depth": "0.0652",
+    "C14_Flow": "0.2275"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:50:00",
+    "Tank1_Depth": "1.2032",
+    "CSO8_Depth": "0.0654",
+    "C14_Flow": "0.2284"
+  },
+  {
+    "Date_time": "01-Feb-2000 10:55:00",
+    "Tank1_Depth": "1.1965",
+    "CSO8_Depth": "0.0656",
+    "C14_Flow": "0.2293"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:00:00",
+    "Tank1_Depth": "1.1897",
+    "CSO8_Depth": "0.0658",
+    "C14_Flow": "0.2302"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:05:00",
+    "Tank1_Depth": "1.1828",
+    "CSO8_Depth": "0.0660",
+    "C14_Flow": "0.2311"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:10:00",
+    "Tank1_Depth": "1.1759",
+    "CSO8_Depth": "0.0662",
+    "C14_Flow": "0.2320"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:15:00",
+    "Tank1_Depth": "1.1689",
+    "CSO8_Depth": "0.0664",
+    "C14_Flow": "0.2329"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:20:00",
+    "Tank1_Depth": "1.1618",
+    "CSO8_Depth": "0.0666",
+    "C14_Flow": "0.2338"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:25:00",
+    "Tank1_Depth": "1.1546",
+    "CSO8_Depth": "0.0668",
+    "C14_Flow": "0.2347"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:30:00",
+    "Tank1_Depth": "1.1474",
+    "CSO8_Depth": "0.0670",
+    "C14_Flow": "0.2356"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:35:00",
+    "Tank1_Depth": "1.1401",
+    "CSO8_Depth": "0.0672",
+    "C14_Flow": "0.2365"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:40:00",
+    "Tank1_Depth": "1.1327",
+    "CSO8_Depth": "0.0674",
+    "C14_Flow": "0.2374"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:45:00",
+    "Tank1_Depth": "1.1252",
+    "CSO8_Depth": "0.0676",
+    "C14_Flow": "0.2383"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:50:00",
+    "Tank1_Depth": "1.1177",
+    "CSO8_Depth": "0.0678",
+    "C14_Flow": "0.2392"
+  },
+  {
+    "Date_time": "01-Feb-2000 11:55:00",
+    "Tank1_Depth": "1.1101",
+    "CSO8_Depth": "0.0680",
+    "C14_Flow": "0.2401"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:00:00",
+    "Tank1_Depth": "3.0050",
+    "CSO8_Depth": "0.0772",
+    "C14_Flow": "0.2056"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:05:00",
+    "Tank1_Depth": "2.9502",
+    "CSO8_Depth": "0.0764",
+    "C14_Flow": "0.2030"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:10:00",
+    "Tank1_Depth": "2.8962",
+    "CSO8_Depth": "0.0756",
+    "C14_Flow": "0.2004"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:15:00",
+    "Tank1_Depth": "2.8431",
+    "CSO8_Depth": "0.0748",
+    "C14_Flow": "0.1979"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:20:00",
+    "Tank1_Depth": "2.7907",
+    "CSO8_Depth": "0.0740",
+    "C14_Flow": "0.1954"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:25:00",
+    "Tank1_Depth": "2.7392",
+    "CSO8_Depth": "0.0732",
+    "C14_Flow": "0.1929"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:30:00",
+    "Tank1_Depth": "2.6884",
+    "CSO8_Depth": "0.0724",
+    "C14_Flow": "0.1905"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:35:00",
+    "Tank1_Depth": "2.6385",
+    "CSO8_Depth": "0.0716",
+    "C14_Flow": "0.1881"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:40:00",
+    "Tank1_Depth": "2.5893",
+    "CSO8_Depth": "0.0708",
+    "C14_Flow": "0.1858"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:45:00",
+    "Tank1_Depth": "2.5409",
+    "CSO8_Depth": "0.0700",
+    "C14_Flow": "0.1835"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:50:00",
+    "Tank1_Depth": "2.4933",
+    "CSO8_Depth": "0.0692",
+    "C14_Flow": "0.1812"
+  },
+  {
+    "Date_time": "01-Feb-2000 12:55:00",
+    "Tank1_Depth": "2.4465",
+    "CSO8_Depth": "0.0684",
+    "C14_Flow": "0.1790"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:00:00",
+    "Tank1_Depth": "2.4004",
+    "CSO8_Depth": "0.0676",
+    "C14_Flow": "0.1768"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:05:00",
+    "Tank1_Depth": "2.3551",
+    "CSO8_Depth": "0.0668",
+    "C14_Flow": "0.1747"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:10:00",
+    "Tank1_Depth": "2.3106",
+    "CSO8_Depth": "0.0660",
+    "C14_Flow": "0.1726"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:15:00",
+    "Tank1_Depth": "2.2668",
+    "CSO8_Depth": "0.0652",
+    "C14_Flow": "0.1705"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:20:00",
+    "Tank1_Depth": "2.2238",
+    "CSO8_Depth": "0.0644",
+    "C14_Flow": "0.1685"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:25:00",
+    "Tank1_Depth": "2.1815",
+    "CSO8_Depth": "0.0636",
+    "C14_Flow": "0.1665"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:30:00",
+    "Tank1_Depth": "2.1400",
+    "CSO8_Depth": "0.0628",
+    "C14_Flow": "0.1646"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:35:00",
+    "Tank1_Depth": "2.0992",
+    "CSO8_Depth": "0.0620",
+    "C14_Flow": "0.1627"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:40:00",
+    "Tank1_Depth": "2.0591",
+    "CSO8_Depth": "0.0612",
+    "C14_Flow": "0.1608"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:45:00",
+    "Tank1_Depth": "2.0198",
+    "CSO8_Depth": "0.0604",
+    "C14_Flow": "0.1590"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:50:00",
+    "Tank1_Depth": "1.9812",
+    "CSO8_Depth": "0.0596",
+    "C14_Flow": "0.1572"
+  },
+  {
+    "Date_time": "01-Feb-2000 13:55:00",
+    "Tank1_Depth": "1.9433",
+    "CSO8_Depth": "0.0588",
+    "C14_Flow": "0.1555"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:00:00",
+    "Tank1_Depth": "1.9061",
+    "CSO8_Depth": "0.0580",
+    "C14_Flow": "0.1538"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:05:00",
+    "Tank1_Depth": "1.8697",
+    "CSO8_Depth": "0.0572",
+    "C14_Flow": "0.1521"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:10:00",
+    "Tank1_Depth": "1.8339",
+    "CSO8_Depth": "0.0564",
+    "C14_Flow": "0.1505"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:15:00",
+    "Tank1_Depth": "1.7989",
+    "CSO8_Depth": "0.0556",
+    "C14_Flow": "0.1489"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:20:00",
+    "Tank1_Depth": "1.7645",
+    "CSO8_Depth": "0.0548",
+    "C14_Flow": "0.1473"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:25:00",
+    "Tank1_Depth": "1.7309",
+    "CSO8_Depth": "0.0540",
+    "C14_Flow": "0.1458"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:30:00",
+    "Tank1_Depth": "1.6979",
+    "CSO8_Depth": "0.0532",
+    "C14_Flow": "0.1443"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:35:00",
+    "Tank1_Depth": "1.6656",
+    "CSO8_Depth": "0.0524",
+    "C14_Flow": "0.1428"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:40:00",
+    "Tank1_Depth": "1.6340",
+    "CSO8_Depth": "0.0516",
+    "C14_Flow": "0.1414"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:45:00",
+    "Tank1_Depth": "1.6031",
+    "CSO8_Depth": "0.0508",
+    "C14_Flow": "0.1400"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:50:00",
+    "Tank1_Depth": "1.5728",
+    "CSO8_Depth": "0.0500",
+    "C14_Flow": "0.1387"
+  },
+  {
+    "Date_time": "01-Feb-2000 14:55:00",
+    "Tank1_Depth": "1.5432",
+    "CSO8_Depth": "0.0492",
+    "C14_Flow": "0.1374"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:00:00",
+    "Tank1_Depth": "1.5143",
+    "CSO8_Depth": "0.0484",
+    "C14_Flow": "0.1361"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:05:00",
+    "Tank1_Depth": "1.4860",
+    "CSO8_Depth": "0.0476",
+    "C14_Flow": "0.1349"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:10:00",
+    "Tank1_Depth": "1.4583",
+    "CSO8_Depth": "0.0468",
+    "C14_Flow": "0.1337"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:15:00",
+    "Tank1_Depth": "1.4313",
+    "CSO8_Depth": "0.0460",
+    "C14_Flow": "0.1325"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:20:00",
+    "Tank1_Depth": "1.4049",
+    "CSO8_Depth": "0.0452",
+    "C14_Flow": "0.1314"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:25:00",
+    "Tank1_Depth": "1.3792",
+    "CSO8_Depth": "0.0444",
+    "C14_Flow": "0.1303"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:30:00",
+    "Tank1_Depth": "1.3540",
+    "CSO8_Depth": "0.0436",
+    "C14_Flow": "0.1292"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:35:00",
+    "Tank1_Depth": "1.3295",
+    "CSO8_Depth": "0.0428",
+    "C14_Flow": "0.1282"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:40:00",
+    "Tank1_Depth": "1.3056",
+    "CSO8_Depth": "0.0420",
+    "C14_Flow": "0.1272"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:45:00",
+    "Tank1_Depth": "1.2823",
+    "CSO8_Depth": "0.0412",
+    "C14_Flow": "0.1262"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:50:00",
+    "Tank1_Depth": "1.2596",
+    "CSO8_Depth": "0.0404",
+    "C14_Flow": "0.1253"
+  },
+  {
+    "Date_time": "01-Feb-2000 15:55:00",
+    "Tank1_Depth": "1.2375",
+    "CSO8_Depth": "0.0396",
+    "C14_Flow": "0.1244"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:00:00",
+    "Tank1_Depth": "1.2160",
+    "CSO8_Depth": "0.0388",
+    "C14_Flow": "0.1235"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:05:00",
+    "Tank1_Depth": "1.1950",
+    "CSO8_Depth": "0.0380",
+    "C14_Flow": "0.1227"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:10:00",
+    "Tank1_Depth": "1.1746",
+    "CSO8_Depth": "0.0372",
+    "C14_Flow": "0.1219"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:15:00",
+    "Tank1_Depth": "1.1548",
+    "CSO8_Depth": "0.0364",
+    "C14_Flow": "0.1211"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:20:00",
+    "Tank1_Depth": "1.1355",
+    "CSO8_Depth": "0.0356",
+    "C14_Flow": "0.1204"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:25:00",
+    "Tank1_Depth": "1.1168",
+    "CSO8_Depth": "0.0348",
+    "C14_Flow": "0.1197"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:30:00",
+    "Tank1_Depth": "1.0986",
+    "CSO8_Depth": "0.0340",
+    "C14_Flow": "0.1190"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:35:00",
+    "Tank1_Depth": "1.0810",
+    "CSO8_Depth": "0.0332",
+    "C14_Flow": "0.1183"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:40:00",
+    "Tank1_Depth": "1.0639",
+    "CSO8_Depth": "0.0324",
+    "C14_Flow": "0.1177"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:45:00",
+    "Tank1_Depth": "1.0473",
+    "CSO8_Depth": "0.0316",
+    "C14_Flow": "0.1171"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:50:00",
+    "Tank1_Depth": "1.0312",
+    "CSO8_Depth": "0.0308",
+    "C14_Flow": "0.1165"
+  },
+  {
+    "Date_time": "01-Feb-2000 16:55:00",
+    "Tank1_Depth": "1.0156",
+    "CSO8_Depth": "0.0300",
+    "C14_Flow": "0.1160"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:00:00",
+    "Tank1_Depth": "1.0005",
+    "CSO8_Depth": "0.0292",
+    "C14_Flow": "0.1155"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:05:00",
+    "Tank1_Depth": "0.9859",
+    "CSO8_Depth": "0.0284",
+    "C14_Flow": "0.1150"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:10:00",
+    "Tank1_Depth": "0.9718",
+    "CSO8_Depth": "0.0276",
+    "C14_Flow": "0.1145"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:15:00",
+    "Tank1_Depth": "0.9582",
+    "CSO8_Depth": "0.0268",
+    "C14_Flow": "0.1141"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:20:00",
+    "Tank1_Depth": "0.9450",
+    "CSO8_Depth": "0.0260",
+    "C14_Flow": "0.1137"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:25:00",
+    "Tank1_Depth": "0.9323",
+    "CSO8_Depth": "0.0252",
+    "C14_Flow": "0.1133"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:30:00",
+    "Tank1_Depth": "0.9200",
+    "CSO8_Depth": "0.0244",
+    "C14_Flow": "0.1130"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:35:00",
+    "Tank1_Depth": "0.9082",
+    "CSO8_Depth": "0.0236",
+    "C14_Flow": "0.1127"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:40:00",
+    "Tank1_Depth": "0.8968",
+    "CSO8_Depth": "0.0228",
+    "C14_Flow": "0.1124"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:45:00",
+    "Tank1_Depth": "0.8859",
+    "CSO8_Depth": "0.0220",
+    "C14_Flow": "0.1121"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:50:00",
+    "Tank1_Depth": "0.8753",
+    "CSO8_Depth": "0.0212",
+    "C14_Flow": "0.1119"
+  },
+  {
+    "Date_time": "01-Feb-2000 17:55:00",
+    "Tank1_Depth": "0.8652",
+    "CSO8_Depth": "0.0204",
+    "C14_Flow": "0.1117"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:00:00",
+    "Tank1_Depth": "0.8555",
+    "CSO8_Depth": "0.0196",
+    "C14_Flow": "0.1115"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:05:00",
+    "Tank1_Depth": "0.8462",
+    "CSO8_Depth": "0.0188",
+    "C14_Flow": "0.1113"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:10:00",
+    "Tank1_Depth": "0.8373",
+    "CSO8_Depth": "0.0180",
+    "C14_Flow": "0.1112"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:15:00",
+    "Tank1_Depth": "0.8288",
+    "CSO8_Depth": "0.0172",
+    "C14_Flow": "0.1111"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:20:00",
+    "Tank1_Depth": "0.8207",
+    "CSO8_Depth": "0.0164",
+    "C14_Flow": "0.1110"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:25:00",
+    "Tank1_Depth": "0.8129",
+    "CSO8_Depth": "0.0156",
+    "C14_Flow": "0.1109"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:30:00",
+    "Tank1_Depth": "0.8055",
+    "CSO8_Depth": "0.0148",
+    "C14_Flow": "0.1109"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:35:00",
+    "Tank1_Depth": "0.7984",
+    "CSO8_Depth": "0.0140",
+    "C14_Flow": "0.1109"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:40:00",
+    "Tank1_Depth": "0.7917",
+    "CSO8_Depth": "0.0132",
+    "C14_Flow": "0.1109"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:45:00",
+    "Tank1_Depth": "0.7853",
+    "CSO8_Depth": "0.0124",
+    "C14_Flow": "0.1109"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:50:00",
+    "Tank1_Depth": "0.7793",
+    "CSO8_Depth": "0.0116",
+    "C14_Flow": "0.1110"
+  },
+  {
+    "Date_time": "01-Feb-2000 18:55:00",
+    "Tank1_Depth": "0.7736",
+    "CSO8_Depth": "0.0108",
+    "C14_Flow": "0.1111"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:00:00",
+    "Tank1_Depth": "0.7682",
+    "CSO8_Depth": "0.0100",
+    "C14_Flow": "0.1112"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:05:00",
+    "Tank1_Depth": "0.7631",
+    "CSO8_Depth": "0.0092",
+    "C14_Flow": "0.1113"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:10:00",
+    "Tank1_Depth": "0.7583",
+    "CSO8_Depth": "0.0084",
+    "C14_Flow": "0.1114"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:15:00",
+    "Tank1_Depth": "0.7538",
+    "CSO8_Depth": "0.0076",
+    "C14_Flow": "0.1116"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:20:00",
+    "Tank1_Depth": "0.7496",
+    "CSO8_Depth": "0.0068",
+    "C14_Flow": "0.1118"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:25:00",
+    "Tank1_Depth": "0.7457",
+    "CSO8_Depth": "0.0060",
+    "C14_Flow": "0.1120"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:30:00",
+    "Tank1_Depth": "0.7421",
+    "CSO8_Depth": "0.0052",
+    "C14_Flow": "0.1122"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:35:00",
+    "Tank1_Depth": "0.7387",
+    "CSO8_Depth": "0.0044",
+    "C14_Flow": "0.1125"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:40:00",
+    "Tank1_Depth": "0.7356",
+    "CSO8_Depth": "0.0036",
+    "C14_Flow": "0.1128"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:45:00",
+    "Tank1_Depth": "0.7328",
+    "CSO8_Depth": "0.0028",
+    "C14_Flow": "0.1131"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:50:00",
+    "Tank1_Depth": "0.7302",
+    "CSO8_Depth": "0.0020",
+    "C14_Flow": "0.1134"
+  },
+  {
+    "Date_time": "01-Feb-2000 19:55:00",
+    "Tank1_Depth": "0.7278",
+    "CSO8_Depth": "0.0012",
+    "C14_Flow": "0.1137"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:00:00",
+    "Tank1_Depth": "0.7257",
+    "CSO8_Depth": "0.0004",
+    "C14_Flow": "0.1141"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:05:00",
+    "Tank1_Depth": "0.7239",
+    "CSO8_Depth": "-0.0004",
+    "C14_Flow": "0.1145"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:10:00",
+    "Tank1_Depth": "0.7222",
+    "CSO8_Depth": "-0.0012",
+    "C14_Flow": "0.1149"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:15:00",
+    "Tank1_Depth": "0.7208",
+    "CSO8_Depth": "-0.0020",
+    "C14_Flow": "0.1153"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:20:00",
+    "Tank1_Depth": "0.7196",
+    "CSO8_Depth": "-0.0028",
+    "C14_Flow": "0.1158"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:25:00",
+    "Tank1_Depth": "0.7187",
+    "CSO8_Depth": "-0.0036",
+    "C14_Flow": "0.1163"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:30:00",
+    "Tank1_Depth": "0.7179",
+    "CSO8_Depth": "-0.0044",
+    "C14_Flow": "0.1168"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:35:00",
+    "Tank1_Depth": "0.7173",
+    "CSO8_Depth": "-0.0052",
+    "C14_Flow": "0.1173"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:40:00",
+    "Tank1_Depth": "0.7169",
+    "CSO8_Depth": "-0.0060",
+    "C14_Flow": "0.1179"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:45:00",
+    "Tank1_Depth": "0.7167",
+    "CSO8_Depth": "-0.0068",
+    "C14_Flow": "0.1185"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:50:00",
+    "Tank1_Depth": "0.7167",
+    "CSO8_Depth": "-0.0076",
+    "C14_Flow": "0.1191"
+  },
+  {
+    "Date_time": "01-Feb-2000 20:55:00",
+    "Tank1_Depth": "0.7169",
+    "CSO8_Depth": "-0.0084",
+    "C14_Flow": "0.1197"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:00:00",
+    "Tank1_Depth": "0.7173",
+    "CSO8_Depth": "-0.0092",
+    "C14_Flow": "0.1204"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:05:00",
+    "Tank1_Depth": "0.7178",
+    "CSO8_Depth": "-0.0100",
+    "C14_Flow": "0.1211"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:10:00",
+    "Tank1_Depth": "0.7185",
+    "CSO8_Depth": "-0.0108",
+    "C14_Flow": "0.1218"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:15:00",
+    "Tank1_Depth": "0.7194",
+    "CSO8_Depth": "-0.0116",
+    "C14_Flow": "0.1226"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:20:00",
+    "Tank1_Depth": "0.7204",
+    "CSO8_Depth": "-0.0124",
+    "C14_Flow": "0.1234"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:25:00",
+    "Tank1_Depth": "0.7216",
+    "CSO8_Depth": "-0.0132",
+    "C14_Flow": "0.1242"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:30:00",
+    "Tank1_Depth": "0.7230",
+    "CSO8_Depth": "-0.0140",
+    "C14_Flow": "0.1250"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:35:00",
+    "Tank1_Depth": "0.7245",
+    "CSO8_Depth": "-0.0148",
+    "C14_Flow": "0.1259"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:40:00",
+    "Tank1_Depth": "0.7262",
+    "CSO8_Depth": "-0.0156",
+    "C14_Flow": "0.1268"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:45:00",
+    "Tank1_Depth": "0.7280",
+    "CSO8_Depth": "-0.0164",
+    "C14_Flow": "0.1277"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:50:00",
+    "Tank1_Depth": "0.7299",
+    "CSO8_Depth": "-0.0172",
+    "C14_Flow": "0.1287"
+  },
+  {
+    "Date_time": "01-Feb-2000 21:55:00",
+    "Tank1_Depth": "0.7320",
+    "CSO8_Depth": "-0.0180",
+    "C14_Flow": "0.1297"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:00:00",
+    "Tank1_Depth": "0.7343",
+    "CSO8_Depth": "-0.0188",
+    "C14_Flow": "0.1307"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:05:00",
+    "Tank1_Depth": "0.7367",
+    "CSO8_Depth": "-0.0196",
+    "C14_Flow": "0.1318"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:10:00",
+    "Tank1_Depth": "0.7392",
+    "CSO8_Depth": "-0.0204",
+    "C14_Flow": "0.1329"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:15:00",
+    "Tank1_Depth": "0.7418",
+    "CSO8_Depth": "-0.0212",
+    "C14_Flow": "0.1340"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:20:00",
+    "Tank1_Depth": "0.7446",
+    "CSO8_Depth": "-0.0220",
+    "C14_Flow": "0.1352"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:25:00",
+    "Tank1_Depth": "0.7475",
+    "CSO8_Depth": "-0.0228",
+    "C14_Flow": "0.1364"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:30:00",
+    "Tank1_Depth": "0.7505",
+    "CSO8_Depth": "-0.0236",
+    "C14_Flow": "0.1376"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:35:00",
+    "Tank1_Depth": "0.7536",
+    "CSO8_Depth": "-0.0244",
+    "C14_Flow": "0.1389"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:40:00",
+    "Tank1_Depth": "0.7569",
+    "CSO8_Depth": "-0.0252",
+    "C14_Flow": "0.1402"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:45:00",
+    "Tank1_Depth": "0.7603",
+    "CSO8_Depth": "-0.0260",
+    "C14_Flow": "0.1415"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:50:00",
+    "Tank1_Depth": "0.7638",
+    "CSO8_Depth": "-0.0268",
+    "C14_Flow": "0.1429"
+  },
+  {
+    "Date_time": "01-Feb-2000 22:55:00",
+    "Tank1_Depth": "0.7674",
+    "CSO8_Depth": "-0.0276",
+    "C14_Flow": "0.1443"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:00:00",
+    "Tank1_Depth": "0.7711",
+    "CSO8_Depth": "-0.0284",
+    "C14_Flow": "0.1458"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:05:00",
+    "Tank1_Depth": "0.7749",
+    "CSO8_Depth": "-0.0292",
+    "C14_Flow": "0.1473"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:10:00",
+    "Tank1_Depth": "0.7788",
+    "CSO8_Depth": "-0.0300",
+    "C14_Flow": "0.1488"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:15:00",
+    "Tank1_Depth": "0.7828",
+    "CSO8_Depth": "-0.0308",
+    "C14_Flow": "0.1504"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:20:00",
+    "Tank1_Depth": "0.7869",
+    "CSO8_Depth": "-0.0316",
+    "C14_Flow": "0.1520"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:25:00",
+    "Tank1_Depth": "0.7911",
+    "CSO8_Depth": "-0.0324",
+    "C14_Flow": "0.1537"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:30:00",
+    "Tank1_Depth": "0.7954",
+    "CSO8_Depth": "-0.0332",
+    "C14_Flow": "0.1554"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:35:00",
+    "Tank1_Depth": "0.7998",
+    "CSO8_Depth": "-0.0340",
+    "C14_Flow": "0.1571"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:40:00",
+    "Tank1_Depth": "0.8043",
+    "CSO8_Depth": "-0.0348",
+    "C14_Flow": "0.1589"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:45:00",
+    "Tank1_Depth": "0.8089",
+    "CSO8_Depth": "-0.0356",
+    "C14_Flow": "0.1607"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:50:00",
+    "Tank1_Depth": "0.8136",
+    "CSO8_Depth": "-0.0364",
+    "C14_Flow": "0.1626"
+  },
+  {
+    "Date_time": "01-Feb-2000 23:55:00",
+    "Tank1_Depth": "0.8183",
+    "CSO8_Depth": "-0.0372",
+    "C14_Flow": "0.1645"
+  }
+]

@@ -1,0 +1,219 @@
+# Logic Analysis: model.py
+
+## **1. Component Overview**
+The `model.py` implements the physics-constrained Generalized Residue Network (gResNet) architecture from the paper. Key components:
+- **PriorNetwork (L)**: Single-hidden-layer neural network approximating dynamic mode decomposition
+- **ResidueNetwork (N)**: Deep neural network (6×100) learning system dynamics residuals
+- **ConstraintLayer**: Physics-based layer computing excess flows via mass balance (Eq. 8)
+- **gResNet**: Main model combining L, N, and constraint layer
+
+## **2. Critical Design Decisions from Paper**
+
+### **2.1 State Vector Composition** (Paper Eq. 7)
+- **Input state x_t**: Concatenated `[h_1,..., h_N, Q_1,..., Q_M]`
+  - `N` = number of nodes (junctions + outfalls)
+  - `M` = number of links (conduits)
+  - Note: `Q_w` is **NOT** included in state vector for constrained version
+- **Output**: Same dimension as input state, plus computed `Q_w` via constraint layer
+
+### **2.2 Network Architecture Specifications**
+| Component | Paper Specification | Implementation Decision |
+|-----------|---------------------|-------------------------|
+| **PriorNetwork (L)** | Single hidden layer NN (DMD approximation) | 1 hidden layer, ReLU, output dimension = state_dim |
+| **ResidueNetwork (N)** | S4: 6 hidden layers × 100 neurons each | 6 linear layers, ReLU activations, 100 neurons each |
+| **Combination** | `x_{t+Δt} = L(x_t) + N(x_t, R_t)` | Element-wise addition of outputs |
+| **ConstraintLayer** | `Q_{w,i} = max(∑Q_US - ∑Q_DS + R_i, 0)` | Mass balance with non-negativity |
+
+### **2.3 Key Physical Constraints**
+1. **Spilling configuration**: Water doesn't re-enter system → `max(..., 0)` in Eq. 8
+2. **Mass conservation**: `Q_w` computed deterministically from predicted `Q` and `R`
+3. **Gradient flow**: Constraint layer must be differentiable for backpropagation
+
+## **3. Dependencies and Data Flow**
+
+### **3.1 Required Inputs from Other Modules**
+```
+network_parser.py → ConstraintLayer:
+  - upstream_matrix (csr_matrix): N×M sparse matrix (1 if link j enters node i)
+  - downstream_matrix (csr_matrix): N×M sparse matrix (1 if link j exits node i)
+
+config.py → All components:
+  - model.prior_network.hidden_units (default: state_dim)
+  - model.residue_network.hidden_layers (6)
+  - model.residue_network.hidden_units_per_layer (100)
+  - model.physical_constraints.enabled (True)
+```
+
+### **3.2 Tensor Dimensions**
+| Tensor | Dimension | Description |
+|--------|-----------|-------------|
+| `x_t` | `(batch_size, N+M)` | Current state vector |
+| `R_t` | `(batch_size, N)` | Runoff inputs at current time |
+| `h_pred` | `(batch_size, N)` | Predicted water levels |
+| `Q_pred` | `(batch_size, M)` | Predicted link flows |
+| `Q_w_pred` | `(batch_size, N)` | Computed excess flows |
+
+## **4. Component-by-Component Logic**
+
+### **4.1 PriorNetwork (L)**
+- **Purpose**: Learn linear/affine prior of system dynamics (DMD approximation)
+- **Architecture**:
+  ```
+  Input: x_t (N+M)
+  ↓
+  Linear: (N+M) → hidden_dim (default: N+M)
+  ↓
+  ReLU activation
+  ↓
+  Linear: hidden_dim → (N+M)
+  ↓
+  Output: L(x_t) (same dimension as input)
+  ```
+- **Implementation Note**: Paper doesn't specify hidden dimension; using state dimension as default
+
+### **4.2 ResidueNetwork (N)**
+- **Purpose**: Learn nonlinear residuals not captured by prior model
+- **Architecture** (S4 from paper):
+  ```
+  Input: concat(x_t, R_t) (N+M + N = 2N+M)
+  ↓
+  Linear: (2N+M) → 100
+  ↓
+  ReLU × 5 (5 hidden layers of 100 neurons)
+  ↓
+  Linear: 100 → (N+M)
+  ↓
+  Output: N(x_t, R_t) (same dimension as state)
+  ```
+- **Critical**: Input concatenation order must match state vector format
+
+### **4.3 ConstraintLayer**
+- **Physics**: Implements Eq. 8 from paper:
+  ```
+  Q_{w,i} = max(∑_{j∈US(i)} Q_j - ∑_{k∈DS(i)} Q_k + R_i, 0)
+  ```
+  where:
+  - `US(i)`: Links entering node i
+  - `DS(i)`: Links exiting node i
+  - `R_i`: Runoff at node i
+- **Implementation**:
+  1. Convert sparse adjacency matrices to dense torch tensors
+  2. Use matrix multiplication: `∑Q_US = upstream_matrix @ Q_pred.T`
+  3. Use matrix multiplication: `∑Q_DS = downstream_matrix @ Q_pred.T`
+  4. Apply element-wise operations with broadcasting
+- **Gradient Flow**: `torch.maximum` (or `torch.relu`) ensures differentiability
+
+### **4.4 gResNet (Main Model)**
+- **Forward Pass Logic**:
+  ```
+  def forward(x_t, R_t):
+      # 1. Get predictions from prior and residue networks
+      prior_out = L(x_t)           # (batch, N+M)
+      residue_out = N(x_t, R_t)    # (batch, N+M)
+      
+      # 2. Combine: Eq. 5 (paper)
+      x_pred = prior_out + residue_out  # (batch, N+M)
+      
+      # 3. Split into h and Q predictions
+      h_pred = x_pred[:, :N]       # First N elements: water levels
+      Q_pred = x_pred[:, N:]       # Next M elements: link flows
+      
+      # 4. Apply physics constraints
+      if constraints_enabled:
+          Q_w_pred = constraint_layer(h_pred, Q_pred, R_t)
+      else:
+          # For ablation study: predict Q_w directly (not in paper's final model)
+          Q_w_pred = None  # Not implemented
+      
+      return h_pred, Q_pred, Q_w_pred
+  ```
+
+## **5. Integration with Training Pipeline**
+
+### **5.1 Loss Computation** (Paper Section 2.3)
+- **Total Loss** = MSE(h_pred, h_true) + MSE(Q_pred, Q_true) + MSE(Q_w_pred, Q_w_true)
+- **Important**: All variables scaled to [0,1] before loss computation
+- **Even with constraints**: `Q_w` included in loss despite being computed deterministically
+
+### **5.2 Gradient Flow Considerations**
+1. **ConstraintLayer gradients**: Must flow back to `Q_pred` (affects mass balance)
+2. **PriorNetwork vs ResidueNetwork**: Separate parameter sets `Θ_L` and `Θ_N`
+3. **Batch processing**: All operations must support batched inputs
+
+### **5.3 Initialization Strategy**
+- **Weight initialization**: Not specified in paper → use PyTorch defaults
+- **Bias initialization**: Typically zero for linear layers
+- **Adjacency matrices**: Fixed, non-learnable parameters in ConstraintLayer
+
+## **6. Edge Cases and Validation Logic**
+
+### **6.1 Input Validation**
+- Check `x_t` dimension matches `N+M`
+- Check `R_t` dimension matches `N`
+- Verify adjacency matrices have correct shapes: `(N, M)`
+
+### **6.2 Numerical Stability**
+- **Scaling**: Inputs are min-max scaled to [0,1]; outputs are inverse-scaled
+- **Overflow prevention**: Use `torch.clamp` if needed for extreme values
+- **Sparse to dense conversion**: Memory efficient for large networks
+
+### **6.3 Ablation Study Support**
+- **Without constraints**: Model should still output `h_pred, Q_pred` (no `Q_w`)
+- **Different network sizes**: Support S1-S4 architectures from Table 1
+- **Window size effects**: Model architecture independent of window size
+
+## **7. Alignment with Paper's Experimental Design**
+
+### **7.1 Exact Specifications from Paper**
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| Δt (time step) | 60s (1 minute) | Section 2.1 |
+| Network N architecture | S4 (6×100) | Table 1, Section 3.1 |
+| Activation function | ReLU | Section 2.4 |
+| Combination | `x_{t+Δt} = L(x_t) + N(x_t, R_t)` | Eq. 5 |
+| Constraint | Eq. 8 with max(..., 0) | Section 2.2.3 |
+
+### **7.2 Deviations and Clarifications**
+1. **PriorNetwork hidden size**: Paper unspecified → use state dimension
+2. **Weight initialization**: Paper unspecified → use PyTorch defaults
+3. **ConstraintLayer gradient**: Paper doesn't discuss but needed for training
+4. **Batch size**: Paper doesn't specify → use 1 (full windows)
+
+## **8. Implementation Sequence**
+
+### **Phase 1: Core Components**
+1. Implement `PriorNetwork` with configurable hidden dimension
+2. Implement `ResidueNetwork` with S4 architecture
+3. Implement `ConstraintLayer` with adjacency matrix operations
+
+### **Phase 2: Integration**
+1. Implement `gResNet` combining all components
+2. Add configuration loading from `config.yaml`
+3. Implement forward pass with proper tensor splitting
+
+### **Phase 3: Validation**
+1. Test with synthetic data of correct dimensions
+2. Verify gradient flow through constraint layer
+3. Validate mass conservation in constraint computations
+
+## **9. Risk Mitigation**
+
+### **9.1 Potential Issues**
+1. **Gradient vanishing/exploding**: Monitor with gradient clipping if needed
+2. **Memory issues with large networks**: Use sparse operations where possible
+3. **Numerical precision**: Use float32 (standard for PyTorch)
+
+### **9.2 Validation Checks**
+- Forward pass produces correct output dimensions
+- Constraint layer computes mass balance correctly
+- Model can be saved/loaded with state dict
+- Compatible with `torch.utils.data.DataLoader`
+
+## **10. Summary of Key Points**
+1. **State vector excludes `Q_w`** in constrained version (Eq. 7)
+2. **Constraint layer is differentiable** for gradient backpropagation
+3. **Network architecture exactly matches S4** (6×100) from paper
+4. **All operations support batching** for parallel window processing
+5. **Physics constraints are applied post-NN** but included in loss
+
+This architecture directly implements the paper's Eq. 5-8 with the hyperparameters specified in Table 1 and Section 3.1, ensuring faithful reproduction of the physics-constrained gResNet approach.

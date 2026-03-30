@@ -1,0 +1,176 @@
+----------------------------------------
+[Implementation approach]
+We will implement a complete system for reproducing the paper's physics-constrained gResNet surrogate model for urban drainage systems. The system will: 1) Parse the provided SWMM network file (Ji.inp) to extract network topology and parameters, 2) Run SWMM simulations to generate training/validation/test data (using the network's existing inflow definitions as boundary conditions), 3) Implement the gResNet architecture with physical constraint layers, 4) Train the model using the paper's hyperparameters, and 5) Evaluate performance against SWMM simulations. All data generation will be derived directly from the SWMM file without synthetic data creation.
+
+----------------------------------------
+[File list]
+- main.py
+- config.py
+- network_parser.py
+- swmm_simulator.py
+- data_processor.py
+- dataset.py
+- model.py
+- trainer.py
+- evaluator.py
+- utils.py
+
+----------------------------------------
+[Data structures and interfaces]
+
+classDiagram
+    class NetworkParser {
+        +__init__(inp_file: str)
+        +parse_network() -> Dict
+        +get_node_data() -> pd.DataFrame
+        +get_link_data() -> pd.DataFrame
+        +get_adjacency_matrices() -> Tuple[csr_matrix, csr_matrix]
+        -_parse_junctions()
+        -_parse_conduits()
+        -_parse_xsections()
+        -_parse_inflows()
+    }
+
+    class SWMMSimulator {
+        +__init__(inp_file: str, config: Dict)
+        +simulate_event(inflow_data: Dict) -> pd.DataFrame
+        +generate_training_series() -> Dict[str, pd.DataFrame]
+        -_create_swmm_input(inflow_data: Dict) -> str
+        -_extract_results(swmm_output: str) -> pd.DataFrame
+    }
+
+    class DataProcessor {
+        +__init__(network_parser: NetworkParser)
+        +create_state_vectors(raw_data: pd.DataFrame) -> np.ndarray
+        +create_input_vectors(inflow_data: Dict) -> np.ndarray
+        +scale_data(data: np.ndarray, fit: bool = False) -> Tuple[np.ndarray, Optional[Dict]]
+        +create_windows(states: np.ndarray, inputs: np.ndarray, window_size: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]
+        +compute_excess_flows(states: np.ndarray, inputs: np.ndarray) -> np.ndarray
+    }
+
+    class SWMMDataset {
+        +__init__(states: np.ndarray, inputs: np.ndarray, targets: np.ndarray, window_size: int)
+        +__len__() -> int
+        +__getitem__(idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+        -_create_windows()
+    }
+
+    class ConstraintLayer {
+        +__init__(upstream_matrix: csr_matrix, downstream_matrix: csr_matrix)
+        +forward(h_pred: torch.Tensor, q_pred: torch.Tensor, r_input: torch.Tensor) -> torch.Tensor
+        -_compute_mass_balance(q_pred: torch.Tensor, r_input: torch.Tensor) -> torch.Tensor
+    }
+
+    class gResNet {
+        +__init__(n_nodes: int, n_links: int, config: Dict)
+        +forward(x_t: torch.Tensor, r_t: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+        -_build_prior_network() -> nn.Module
+        -_build_residue_network() -> nn.Module
+    }
+
+    class SurrogateTrainer {
+        +__init__(model: gResNet, constraint_layer: ConstraintLayer, config: Dict)
+        +train(train_dataset: SWMMDataset, val_dataset: SWMMDataset) -> Dict
+        +validate(val_dataset: SWMMDataset) -> float
+        +save_checkpoint(path: str)
+        +load_checkpoint(path: str)
+        -_compute_loss(predictions: Tuple, targets: Tuple) -> torch.Tensor
+        -_early_stopping() -> bool
+    }
+
+    class Evaluator {
+        +__init__(model: gResNet, constraint_layer: ConstraintLayer, data_processor: DataProcessor)
+        +compute_metrics(predictions: Dict, targets: Dict) -> Dict
+        +plot_time_series(node_id: str, predictions: Dict, targets: Dict, save_path: str)
+        +plot_spatial_r2(predictions: Dict, targets: Dict, network_data: Dict, save_path: str)
+        +benchmark_performance() -> Dict
+    }
+
+    class Main {
+        +__init__(config_path: str)
+        +run()
+        -_setup_pipeline()
+        -_train_model()
+        -_evaluate_model()
+    }
+
+    NetworkParser --> SWMMSimulator : provides network structure
+    NetworkParser --> DataProcessor : provides adjacency matrices
+    SWMMSimulator --> DataProcessor : provides raw simulation data
+    DataProcessor --> SWMMDataset : creates windowed datasets
+    gResNet --> ConstraintLayer : uses for physics constraints
+    ConstraintLayer --> gResNet : integrated in forward pass
+    SWMMDataset --> SurrogateTrainer : training data
+    gResNet --> SurrogateTrainer : model to train
+    gResNet --> Evaluator : trained model for evaluation
+    ConstraintLayer --> Evaluator : used in evaluation
+    Main --> NetworkParser
+    Main --> SWMMSimulator
+    Main --> DataProcessor
+    Main --> gResNet
+    Main --> SurrogateTrainer
+    Main --> Evaluator
+
+
+----------------------------------------
+[Program call flow]
+
+sequenceDiagram
+    participant M as Main
+    participant NP as NetworkParser
+    participant SS as SWMMSimulator
+    participant DP as DataProcessor
+    participant DS as SWMMDataset
+    participant GRN as gResNet
+    participant CL as ConstraintLayer
+    participant ST as SurrogateTrainer
+    participant E as Evaluator
+
+    M->>NP: __init__('Ji.inp')
+    M->>NP: parse_network()
+    NP-->>M: network_data
+
+    M->>SS: __init__('Ji.inp', config)
+    M->>SS: generate_training_series()
+    SS->>SS: _create_swmm_input()
+    SS->>SS: simulate_event() (multiple times)
+    SS-->>M: raw_data_dict
+
+    M->>DP: __init__(NP)
+    M->>DP: create_state_vectors(raw_data)
+    DP-->>M: states_array
+    M->>DP: create_input_vectors(inflow_data)
+    DP-->>M: inputs_array
+    M->>DP: scale_data(states_array, fit=True)
+    DP-->>M: scaled_states, scalers
+    M->>DP: scale_data(inputs_array, fit=True)
+    DP-->>M: scaled_inputs, scalers
+    M->>DP: create_windows(scaled_states, scaled_inputs, window_size)
+    DP-->>M: windowed_states, windowed_inputs, windowed_targets
+
+    M->>DS: __init__(windowed_states, windowed_inputs, windowed_targets, window_size)
+    M->>GRN: __init__(n_nodes, n_links, config)
+    M->>CL: __init__(upstream_matrix, downstream_matrix)
+    M->>ST: __init__(GRN, CL, config)
+
+    M->>ST: train(train_dataset, val_dataset)
+    ST->>GRN: forward(x_t, r_t)
+    GRN->>CL: forward(h_pred, q_pred, r_input)
+    CL-->>GRN: q_w_pred
+    GRN-->>ST: predictions
+    ST->>ST: _compute_loss(predictions, targets)
+    ST->>ST: _early_stopping()
+    ST-->>M: training_history
+
+    M->>E: __init__(GRN, CL, DP)
+    M->>E: compute_metrics(test_predictions, test_targets)
+    E-->>M: metrics_dict
+    M->>E: plot_time_series('node_1', predictions, targets, 'plot.png')
+    M->>E: benchmark_performance()
+    E-->>M: performance_dict
+
+
+----------------------------------------
+[Anything UNCLEAR]
+1) The paper uses 40 years of rainfall data from multiple gauges - we only have one SWMM file with limited inflow definitions. How should we create sufficient training data diversity? 2) The paper's System 1 has an overflow structure, but our Ji.inp has none. Should we modify the network or proceed without overflow simulations? 3) The paper uses min-max scaling per variable - do we need to handle zero-variance variables? 4) For the prior network L, the paper mentions 'dynamic mode decomposition approximation' but uses a single hidden layer NN. What should the hidden layer size be? 5) The windowed training approach: should windows overlap or be contiguous? 6) How to handle the 'spilling configuration' in SWMM - is this just setting ponding area to zero?
+

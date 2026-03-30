@@ -1,0 +1,242 @@
+# Reproducibility Plan: Physics-Guided Machine Learning Surrogate for Urban Drainage Systems
+
+## **Overview**
+This plan outlines a step-by-step approach to reproduce the methodology from *"Accelerating hydrodynamic simulations of urban drainage systems with physics-guided machine learning"* using the provided SWMM network file (`Ji.inp`). The plan focuses on implementing the physics-constrained Generalized Residue Network (gResNet) surrogate model to simulate 1D hydrodynamics in urban drainage networks, strictly adhering to the paper's methodology and experimental design.
+
+---
+
+## **Phase 1: Data Generation and Preprocessing**
+
+### **1.1 Parse SWMM Network File**
+**Objective:** Extract all necessary network topology and parameters for HiFi simulations and model configuration.
+
+**Steps:**
+1. **Parse network topology:**
+   - Extract all **nodes** (junctions, outfalls) → Node IDs, elevations, max depths.
+   - Extract all **links** (conduits) → Link IDs, upstream/downstream nodes, length, roughness, cross-sectional geometry (diameter for circular pipes).
+   - Construct adjacency matrices mapping nodes to upstream/downstream links.
+
+2. **Extract hydraulic parameters:**
+   - Pipe diameters from `[XSECTIONS]`.
+   - Node invert elevations from `[JUNCTIONS]` and `[OUTFALLS]`.
+   - Initial conditions (empty system as per paper).
+
+3. **Identify boundary conditions:**
+   - Locate inflow nodes from `[INFLOWS]` section (Nodes 1 & 3 in `Ji.inp`).
+   - Note: The provided file has no rainfall-runoff model; we will use direct nodal inflows as runoff inputs \( R_i(t) \).
+
+### **1.2 Generate Training/Validation/Test Data via HiFi Simulations**
+**Objective:** Create labeled datasets by running SWMM (as HiFi model) simulations with varying inflow hydrographs.
+
+**Steps:**
+1. **Design inflow time series (runoff \( R_i(t) \)):**
+   - Since real rainfall-runoff data isn't provided, generate synthetic but *physically plausible* inflow hydrographs at nodes 1 & 3 to create diverse hydraulic conditions (low flow, high flow, surcharge).
+   - **Important:** This deviates slightly from the paper (which used observed rainfall), but is necessary given data constraints. We will explicitly note this in documentation.
+   - Generate multiple events of varying intensity, duration, and temporal patterns.
+   - Scale generation to produce ~70k–100k 1-minute timesteps for training (aligned with paper's data volume).
+
+2. **Run SWMM simulations:**
+   - Use `pyswmm` Python wrapper to run simulations.
+   - Configure SWMM to match paper's HiFi settings:
+     - Routing time step: 5 seconds (paper used 5s fixed step).
+     - Simulation duration: cover all generated inflow events.
+     - Enable "spilling configuration" (water does not re-enter system).
+   - Extract results at **1-minute intervals** (surrogate time step Δt):
+     - Water levels \( h_i(t) \) at all nodes.
+     - Flows \( Q_j(t) \) in all links.
+     - Excess flows \( Q_{w,i}(t) \) (surcharge/overflow) at nodes.
+
+3. **Split data into training, validation, and test sets:**
+   - Follow paper's event-based split (not random temporal split).
+   - Create three independent sets of inflow events (concatenated).
+   - Ensure test set is fully independent (different statistical properties).
+
+### **1.3 Data Preprocessing**
+**Steps:**
+1. **Construct state vectors** \( \mathbf{x}_t \) for each timestep:
+   \[
+   \mathbf{x}_t = [h_1, \dots, h_N, Q_1, \dots, Q_M]
+   \]
+   Where \( N \) = number of nodes, \( M \) = number of links.
+
+2. **Construct input vectors** \( \mathbf{R}_t \):
+   \[
+   \mathbf{R}_t = [R_1, \dots, R_N]
+   \]
+   Where \( R_i \) is runoff inflow at node \( i \) (zero for non-inflow nodes).
+
+3. **Min-Max scaling:**
+   - Scale each state variable (\( h, Q \)) and input (\( R \)) independently to [0,1] range.
+   - Compute scaling parameters (min, max) **only from training data**.
+   - Apply same scaling to validation and test sets.
+
+4. **Create training windows:**
+   - Divide training series into overlapping windows of size \( W \) (hyperparameter).
+   - Each window: initial state \( \mathbf{x}_t \), input sequence \( \mathbf{R}_{t:t+W-1} \), target states \( \mathbf{x}_{t+1:t+W} \).
+
+---
+
+## **Phase 2: Model Implementation**
+
+### **2.1 gResNet Architecture**
+**Objective:** Implement the physics-constrained generalized residue network.
+
+**Components:**
+1. **Prior model \( L(\mathbf{x}_t; \Theta_L) \):**
+   - Single hidden layer neural network (paper uses dynamic mode decomposition approximation).
+   - Input: current state \( \mathbf{x}_t \).
+   - Output: prior prediction of next state (same dimension as \( \mathbf{x}_t \)).
+
+2. **Residue model \( N(\mathbf{x}_t, \mathbf{R}_t; \Theta_N) \):**
+   - Deep neural network with architecture S4 (selected in paper): **6 hidden layers, 100 neurons each**.
+   - Activation: ReLU for hidden layers.
+   - Input: concatenated \( \mathbf{x}_t \) and \( \mathbf{R}_t \).
+   - Output: residue to add to prior model prediction.
+
+3. **Combination and constraint layer:**
+   - Compute: \( \mathbf{x}_{t+\Delta t}^\text{pred} = L(\mathbf{x}_t) + N(\mathbf{x}_t, \mathbf{R}_t) \)
+   - Apply constraint layer \( C(\cdot) \) to compute excess flows via mass balance (Eq. 8):
+     \[
+     Q_{w,i} = \max\left(\sum_j Q_{US,i,j} - \sum_k Q_{DS,i,k} + R_i, 0\right)
+     \]
+   - Note: \( Q_{w,i} \) is computed post-hoc, not part of state vector.
+
+### **2.2 Implementation Details**
+**Framework:** TensorFlow 2.x (align with paper's 2.7.0).
+
+**Key considerations:**
+- Implement adjacency-aware mass balance calculation using network topology.
+- Ensure differentiable operations where needed for backpropagation.
+- Implement autoregressive roll-out for multi-step prediction during training.
+
+---
+
+## **Phase 3: Training Procedure**
+
+### **3.1 Loss Function and Optimization**
+**Loss:** Mean Squared Error (MSE) on scaled variables:
+\[
+\mathcal{L} = \frac{1}{W} \sum_{k=1}^{W} \left[ \alpha \| \mathbf{h}_k - \hat{\mathbf{h}}_k \|^2 + \beta \| \mathbf{Q}_k - \hat{\mathbf{Q}}_k \|^2 + \gamma \| \mathbf{Q}_{w,k} - \hat{\mathbf{Q}}_{w,k} \|^2 \right]
+\]
+Where \( \alpha = \beta = \gamma = 1 \) (equal weighting after scaling).
+
+**Optimizer:**
+- **Algorithm:** Adam optimizer.
+- **Learning rate:** Initial 1e-3, exponential decay to 1e-4 over 2000 epochs.
+- **Batch size:** Full window (details in hyperparameters).
+
+### **3.2 Training Regimen**
+1. **Windowed training:**
+   - Use window size \( W = 60 \) minutes (selected in paper).
+   - Initialize each window with true state from HiFi data.
+   - Train on multiple windows in parallel (if computational resources allow).
+
+2. **Validation and early stopping:**
+   - Validate on independent validation series (initialized from empty system).
+   - Stop training if validation loss doesn't improve for 500 epochs.
+   - Train for maximum 2000 epochs.
+
+3. **Multiple random initializations:**
+   - Train 5 independent models with different random seeds.
+   - Select best model based on validation loss.
+
+### **3.3 Hyperparameters (Fixed per Paper)**
+- **Network architecture:** S4 (6×100).
+- **Window size:** 60 minutes (for final model).
+- **Time step Δt:** 1 minute.
+- **Activation:** ReLU.
+- **Weight initialization:** Default TensorFlow (paper doesn't specify).
+
+---
+
+## **Phase 4: Evaluation**
+
+### **4.1 Performance Metrics**
+Compute on **unscaled** test data:
+
+1. **Point-wise metrics:**
+   - RMSE (m for h, m³/s for Q and Q_w)
+   - R² coefficient of determination
+
+2. **Volume-based metrics:**
+   - Total volume errors for runoff, surcharge, overflow, outflow.
+   - Event-based total excess flow volumes at individual nodes.
+
+3. **Temporal analysis:**
+   - Time series plots for selected nodes/links during high-flow events.
+   - Spatial distribution of R² values across network.
+
+### **4.2 Computational Performance**
+- **Training time:** Record total training time (including HiFi data generation).
+- **Inference time:** Time to simulate full test series (≈1.5M steps).
+- **Speed-up factor:** Compare with SWMM simulation time (using 5s time step).
+
+### **4.3 Ablation Studies**
+Compare:
+1. **With vs. without physical constraints** (mass balance for Q_w).
+2. **Different window sizes** (1, 10, 60, 120, 360 min) for hyperparameter study.
+3. **Different network sizes** (S1-S4 as defined in paper) if computational resources allow.
+
+---
+
+## **Phase 5: Implementation Roadmap**
+
+### **Week 1-2: Data Pipeline**
+- Parse `Ji.inp` and extract network topology.
+- Implement SWMM simulation wrapper for data generation.
+- Generate and validate training/validation/test datasets.
+- Implement data scaling and windowing utilities.
+
+### **Week 3-4: Model Implementation**
+- Implement gResNet architecture (L and N networks).
+- Implement constraint layer with network-aware mass balance.
+- Set up TensorFlow training pipeline with custom loss.
+- Implement autoregressive rollout for validation.
+
+### **Week 5-6: Training and Hyperparameter Tuning**
+- Train initial models with different window sizes.
+- Select optimal window size based on validation loss.
+- Train 5 models with optimal configuration.
+- Implement early stopping and model checkpointing.
+
+### **Week 7-8: Evaluation and Analysis**
+- Run final model on test series.
+- Compute all performance metrics.
+- Generate comparative plots (time series, spatial R², volume errors).
+- Benchmark computational performance.
+
+---
+
+## **Critical Considerations and Deviations from Paper**
+
+### **Data Limitations:**
+1. **No real rainfall-runoff data:** We must generate synthetic inflow hydrographs. This affects the diversity of training conditions but is necessary given constraints.
+2. **Small network size:** `Ji.inp` has only 6 pipes vs. 60-87 in paper. Results may not fully represent paper's conclusions about scalability.
+3. **No overflow structures:** The provided network has no weirs/overflows (unlike System 1 in paper). We can only simulate surcharges.
+
+### **Implementation Clarifications Needed:**
+1. **Prior model L architecture:** Paper mentions "single hidden layer" but doesn't specify size. We'll use same hidden dimension as state vector.
+2. **Weight initialization:** Not specified; we'll use TensorFlow defaults.
+3. **Batch size:** Paper doesn't specify; we'll use full windows as batches.
+
+### **Reproducibility Notes:**
+- All random seeds will be fixed for reproducibility.
+- Full configuration will be saved (hyperparameters, scaling parameters).
+- SWMM simulation settings will be documented (time step, numerical parameters).
+
+---
+
+## **Expected Outcomes**
+1. A working implementation of physics-constrained gResNet for UDS hydraulics.
+2. Quantitative results showing:
+   - R² > 0.9 for water levels and flows in most elements.
+   - Significant speed-up (10-100×) compared to SWMM.
+   - Improved performance with physical constraints vs. pure data-driven.
+3. Codebase structured for extension to larger networks and different physical constraints.
+
+## **Risk Mitigation**
+- **Data scarcity:** Start with simple inflow patterns, gradually increase complexity.
+- **Training instability:** Implement gradient clipping, learning rate schedules.
+- **Memory issues:** Use smaller batches or sequence truncation for large windows.
+
+This plan provides a comprehensive roadmap for reproducing the paper's methodology while adapting to the available data constraints. The implementation will prioritize fidelity to the described methods while making necessary adaptations for the specific network provided.

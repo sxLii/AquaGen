@@ -1,0 +1,220 @@
+# Logic Analysis: utils.py
+
+## 1. Overview
+`utils.py` serves as the foundational utility module providing essential functions for reproducibility, configuration management, performance measurement, and data serialization. As specified, this module has **no dependencies on other project files** and should be implemented as a standalone module.
+
+## 2. Function Analysis
+
+### 2.1 `set_seed(seed: int) -> None`
+**Purpose:** Ensure reproducibility across all random number generators used in the project.
+
+**Logic Requirements:**
+1. **Seed all relevant random number generators:**
+   - Python's built-in `random` module
+   - NumPy (`numpy.random`)
+   - PyTorch (`torch.manual_seed`, `torch.cuda.manual_seed_all` if CUDA available)
+   - PyTorch deterministic algorithms (for reproducibility)
+
+2. **Configuration-driven behavior:**
+   - Use `config["system"]["random_seed"]` as default seed
+   - Must be called at the beginning of `main.py` and potentially in trainer initialization
+
+3. **Technical considerations:**
+   - Set `torch.backends.cudnn.deterministic = True` if using CUDA
+   - Set `torch.backends.cudnn.benchmark = False` for reproducibility
+   - Handle both CPU and GPU environments
+
+**Paper Alignment:** Not explicitly mentioned in paper, but essential for reproducibility of neural network training results.
+
+### 2.2 `load_config(config_path: str) -> Dict`
+**Purpose:** Load and parse YAML configuration file into a structured dictionary.
+
+**Logic Requirements:**
+1. **File loading:**
+   - Use `yaml.safe_load()` to parse YAML file
+   - Handle file not found errors gracefully
+
+2. **Configuration validation:**
+   - Ensure all required sections from `config.yaml` are present:
+     - `data`, `model`, `training`, `evaluation`, `performance`, `system`
+   - Validate critical parameters against paper specifications:
+     - `training_window_size: 60` (from paper's selected hyperparameter)
+     - `residue_network.architecture: "S4"` (6 layers × 100 neurons)
+     - Learning rate schedule (1e-3 → 1e-4 exponential decay)
+
+3. **Type conversion:**
+   - Convert string representations to appropriate types
+   - Handle nested dictionary structure
+
+4. **Default value handling:**
+   - Paper doesn't specify some values (e.g., `prior_network.hidden_units`)
+   - Should fill reasonable defaults based on context
+
+### 2.3 `Timer` Class
+**Purpose:** Measure execution time for performance benchmarking as specified in paper's Table 2.
+
+**Logic Requirements:**
+1. **Class design:**
+   - Implement as context manager (`__enter__`, `__exit__`)
+   - Support both manual timing and context-based timing
+
+2. **Timing scope:**
+   - **Training time:** Match paper's measurement (0.5-2 hours for 2000 epochs)
+   - **Inference time:** Compare with SWMM simulation times (Table 2)
+   - **Data generation time:** HiFi simulation time for label generation
+
+3. **Output format:**
+   - Return elapsed time in seconds
+   - Convert to minutes/hours for reporting
+   - Integrate with evaluation metrics
+
+**Paper Alignment:** Section 3.5 "Computation time" requires precise timing measurements for:
+- Training times (0.5-2 hours for System 1)
+- Simulation times (~100s for 8,200 rain events)
+- Speed-up calculations (one to two orders of magnitude)
+
+### 2.4 `save_pickle(obj: Any, path: str) -> None`
+### 2.5 `load_pickle(path: str) -> Any`
+**Purpose:** Serialize and deserialize Python objects for intermediate data storage.
+
+**Logic Requirements:**
+1. **Data to serialize:**
+   - Trained model weights and architecture
+   - Data scaling parameters (min/max per variable from training set)
+   - Network adjacency matrices (sparse matrices from parser)
+   - Training history (loss curves, validation metrics)
+   - Evaluation results (metrics, predictions)
+
+2. **File management:**
+   - Create necessary directories (from `config["system"]["checkpoint_dir"]`)
+   - Handle large file sizes (network states could be large)
+   - Implement compression if needed
+
+3. **Error handling:**
+   - Catch `pickle.PickleError` and `IOError`
+   - Provide informative error messages
+
+**Paper Alignment:** Necessary for storing intermediate results during the multi-stage training process (hyperparameter selection, multiple random initializations).
+
+## 3. Implementation Considerations
+
+### 3.1 Reproducibility Chain
+The paper emphasizes reproducibility through:
+1. Fixed random seeds (Section 2.5.3 mentions "different (random) initializations")
+2. Consistent data splitting (training/validation/test series)
+3. Documented hyperparameters (Table 1)
+
+`set_seed()` must ensure that:
+- All 5 training iterations (from `config["training"]["random_initializations"]`) are truly independent
+- Data shuffling (if any) is reproducible
+- Neural network weight initialization is consistent
+
+### 3.2 Configuration Consistency
+The `config.yaml` contains exact values from the paper:
+- **Window size:** 60 minutes (selected from hyperparameter study)
+- **Network architecture:** S4 (6×100)
+- **Learning rate:** 1e-3 → 1e-4 exponential decay
+- **Early stopping:** 500 epochs patience
+
+`load_config()` must preserve these values exactly and not introduce deviations.
+
+### 3.3 Performance Measurement Context
+`Timer` class measurements should align with paper's benchmarking:
+- **Training time:** Includes both "label generation" (SWMM simulations) and actual neural network training
+- **Single CPU setting:** Paper used single CPU (no GPU benefit mentioned)
+- **Autoregressive nature:** Paper notes loop over time series limits GPU parallelization
+
+### 3.4 Data Serialization Strategy
+Critical data that must be serialized for reproducibility:
+1. **Preprocessing artifacts:**
+   - Min-max scaler parameters (per variable)
+   - Training/validation/test split indices
+   - Network topology representation
+
+2. **Training artifacts:**
+   - Model checkpoints (every 500 epochs for early stopping)
+   - Best model based on validation loss
+   - Training history for plotting
+
+3. **Evaluation artifacts:**
+   - Predictions on test series
+   - Computed metrics (RMSE, R², volume errors)
+   - Time series plots data
+
+## 4. Dependencies and Integration
+
+### 4.1 Module Dependencies (as specified: None)
+- **External:** `numpy`, `torch`, `random`, `time`, `pickle`, `yaml`
+- **Internal:** None - this module stands alone
+
+### 4.2 Usage Pattern
+All other modules will import utilities as:
+```python
+from utils import set_seed, load_config, Timer, save_pickle, load_pickle
+```
+
+### 4.3 Order of Operations in Main Pipeline
+1. `load_config()` → Read configuration
+2. `set_seed()` → Initialize random state
+3. `Timer()` → Measure data generation time
+4. `save_pickle()` → Save preprocessed data
+5. `Timer()` → Measure training time
+6. `save_pickle()` → Save model checkpoints
+7. `Timer()` → Measure evaluation time
+8. `save_pickle()` → Save final results
+
+## 5. Paper-Specific Considerations
+
+### 5.1 Alignment with Experimental Design
+The paper's methodology (Section 2.3, Fig. 1c) requires:
+- **Training:** Windowed approach with initialization from HiFi results
+- **Validation:** Initialized from empty system
+- **Testing:** Independent series, fully separated
+
+Utilities must support this three-phase approach through proper serialization of each phase's data.
+
+### 5.2 Hyperparameter Study Support
+Table 1 in paper tests multiple configurations:
+- Window sizes: [1, 10, 60, 120, 360] minutes
+- Network sizes: S1-S4
+- With/without physical constraints
+
+`save_pickle()`/`load_pickle()` must handle multiple experiment configurations systematically.
+
+### 5.3 Random Initialization Handling
+Paper trains "five times for each combination of hyperparameters" (Section 2.5.3). `set_seed()` must enable this by:
+- Accepting a seed parameter for each iteration
+- Ensuring complete independence between iterations
+- Allowing reproducibility of each individual run
+
+## 6. Error Cases and Edge Conditions
+
+### 6.1 Configuration Loading
+- Missing YAML file
+- Invalid YAML syntax
+- Missing required configuration sections
+- Type mismatches (e.g., string instead of int)
+
+### 6.2 Reproducibility Issues
+- CUDA non-determinism despite settings
+- Platform-specific random number generation differences
+- Version differences in libraries
+
+### 6.3 Performance Measurement
+- Very short intervals (sub-millisecond precision needed)
+- Nested timing contexts
+- System clock adjustments during long runs
+
+### 6.4 Serialization
+- Large object sizes (>4GB pickle limitation)
+- Circular references
+- Version compatibility of pickled objects
+
+## 7. Conclusion
+`utils.py` implements the foundational utilities that ensure the entire reproduction effort remains:
+1. **Reproducible** - through strict seed control
+2. **Configurable** - through YAML-based parameter management
+3. **Measurable** - through precise timing instrumentation
+4. **Persistent** - through systematic data serialization
+
+These utilities directly support the paper's emphasis on rigorous experimental methodology and transparent reporting of computational performance.

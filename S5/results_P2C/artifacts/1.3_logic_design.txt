@@ -1,0 +1,54 @@
+----------------------------------------
+[Required packages]
+- numpy==1.24.0
+- torch==2.0.0
+- pandas==2.0.0
+- scipy==1.10.0
+- matplotlib==3.7.0
+- pyyaml==6.0
+- pyswmm==0.6.2
+- scikit-learn==1.2.0
+- networkx==3.0
+
+----------------------------------------
+[Required Other language third-party packages]
+- SWMM (EPANET) engine for simulation
+
+----------------------------------------
+[Logic Analysis]
+- ['utils.py', 'Contains utility functions: 1) set_seed() for reproducibility, 2) load_config() to load YAML configs, 3) Timer class for performance measurement, 4) save_pickle/load_pickle for data serialization. Imports: numpy, torch, random, time, pickle, yaml. No dependencies on other project files.']
+- ['config.py', 'Defines configuration dataclasses and default hyperparameters: 1) ModelConfig (network sizes, learning rates, activations), 2) DataConfig (window sizes, scaling methods), 3) TrainingConfig (epochs, batch size, early stopping). Imports: dataclasses, typing. No dependencies.']
+- ['network_parser.py', 'Parses SWMM .inp file: 1) NetworkParser class extracts nodes (ID, elevation, max depth), links (ID, from/to nodes, length, diameter), and adjacency matrices. 2) Creates sparse adjacency matrices for upstream/downstream relationships. 3) Extracts inflow definitions. Imports: re, pandas, numpy, scipy.sparse, pathlib. Dependencies: utils.py for helper functions.']
+- ['swmm_simulator.py', 'Manages SWMM simulations: 1) SWMMSimulator class creates modified .inp files with different inflow hydrographs. 2) Runs simulations via pyswmm. 3) Extracts results at 1-minute intervals. 4) Splits data into training/validation/test sets based on events. Imports: tempfile, subprocess, pandas, pyswmm. Dependencies: network_parser.py for network structure, config.py for simulation settings.']
+- ['data_processor.py', 'Processes raw SWMM outputs: 1) Creates state vectors [h_nodes, Q_links]. 2) Creates input vectors [R_nodes]. 3) Min-max scaling per variable (fits on training, applies to val/test). 4) Creates sliding windows for training. 5) Computes excess flows via mass balance. Imports: numpy, sklearn.preprocessing. Dependencies: network_parser.py for adjacency matrices, config.py for processing parameters.']
+- ['dataset.py', 'PyTorch Dataset implementation: 1) SWMMDataset class handles windowed data loading. 2) __getitem__ returns (x_t, R_t, x_{t+1}) tensors. 3) Supports batching via DataLoader. Imports: torch, numpy. Dependencies: data_processor.py for windowed arrays.']
+- ['model.py', 'Neural network architecture: 1) PriorNetwork (L) - single hidden layer MLP. 2) ResidueNetwork (N) - 6-layer MLP with 100 neurons per layer. 3) ConstraintLayer - computes Q_w via mass balance (Eq. 8). 4) gResNet - combines L, N, and constraint layer. Imports: torch.nn, torch.nn.functional. Dependencies: network_parser.py for adjacency matrices in ConstraintLayer, config.py for model hyperparameters.']
+- ['trainer.py', 'Training loop and optimization: 1) SurrogateTrainer class manages training/validation. 2) Implements Adam with exponential LR decay. 3) Early stopping (500 epochs no improvement). 4) Loss = MSE on h, Q, Q_w. 5) Checkpoint saving/loading. Imports: torch.optim, torch.utils.data, numpy, pathlib. Dependencies: model.py, dataset.py, config.py, utils.py.']
+- ['evaluator.py', 'Evaluation and visualization: 1) Evaluator class computes RMSE, R², volume errors. 2) Generates time series plots. 3) Creates spatial R² maps. 4) Benchmarks speed-up vs SWMM. Imports: matplotlib, sklearn.metrics, time, numpy. Dependencies: model.py, data_processor.py, network_parser.py.']
+- ['main.py', 'Orchestrates entire pipeline: 1) Loads config. 2) Parses network. 3) Generates simulation data. 4) Processes data. 5) Creates datasets. 6) Initializes model. 7) Trains model. 8) Evaluates results. Imports: all other modules. Dependencies: all project files.']
+
+----------------------------------------
+[Task list]
+- utils.py
+- config.py
+- network_parser.py
+- swmm_simulator.py
+- data_processor.py
+- dataset.py
+- model.py
+- trainer.py
+- evaluator.py
+- main.py
+
+----------------------------------------
+[Full API spec]
+
+
+----------------------------------------
+[Shared Knowledge]
+1) Configuration object (from config.py) is passed to all modules. 2) Network adjacency matrices (upstream/downstream sparse matrices) are shared between network_parser.py, data_processor.py, and model.py. 3) Data scaling parameters (min/max per variable) must be saved from training and reused for validation/testing. 4) All random seeds must be set consistently via utils.set_seed(). 5) The state vector format: first N elements = node water levels (h), next M elements = link flows (Q). 6) Time step Δt = 1 minute is hardcoded throughout.
+
+----------------------------------------
+[Anything UNCLEAR]
+1) How to generate sufficient training data diversity from the single Ji.inp file? The file only has 10 minutes of inflow data for 2 nodes. Should we replicate/vary this data or assume users will provide richer .inp files? 2) The paper trains on 70k+ timesteps - can't achieve this with current data. Should we implement data augmentation by scaling/time-shifting the existing inflow series? 3) SWMM 'spilling configuration': Does this mean setting ponding area to 0 or using a specific SWMM option? 4) Early stopping: Should we use validation loss on entire validation series (starting from empty system) or windowed validation? 5) ConstraintLayer gradient flow: Should Q_w predictions be included in the loss even though they're computed deterministically from Q and R?
+

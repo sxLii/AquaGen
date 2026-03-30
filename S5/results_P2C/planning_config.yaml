@@ -1,0 +1,108 @@
+## Configuration for reproducing "Accelerating hydrodynamic simulations of urban drainage systems with physics-guided machine learning"
+## All values extracted from the paper
+
+# Data configuration
+data:
+  inp_file: "Ji.inp"  # SWMM network file
+  time_step: 60  # Δt = 1 minute in seconds
+  simulation_time_step: 5  # HiFi model time step in seconds (paper: 5s fixed step)
+  training_window_size: 60  # 60 minutes (selected from hyperparameter tuning)
+  window_sizes_tested: [1, 10, 60, 120, 360]  # Window sizes tested in paper
+  scaling_method: "minmax"  # Min-max scaling to [0,1] per variable
+  validation_split: 0.2  # Approximate split (paper uses separate events)
+  test_split: 0.2  # Approximate split (paper uses fully independent series)
+  
+  # Training data volume from paper
+  training_series_points: 73990  # Series A: 73,990 1-minute data points
+  validation_series_points: 19095  # Series A: 19,095 1-minute data points
+  # Note: Actual volumes will depend on generated inflow events
+
+# Model architecture
+model:
+  state_vector_format: ["h_nodes", "Q_links"]  # [h1..hN, Q1..QM] (Eq. 7)
+  # Prior network L (single hidden layer)
+  prior_network:
+    hidden_units: null  # Paper doesn't specify; we'll use state dimension
+    activation: "relu"
+    
+  # Residue network N (selected architecture S4)
+  residue_network:
+    architecture: "S4"  # From Table 1
+    hidden_layers: 6
+    hidden_units_per_layer: 100
+    activation: "relu"
+    
+  # Physical constraints
+  physical_constraints:
+    enabled: true  # Mass balance constraint for Q_w (Eq. 8)
+    spilling_configuration: true  # Water doesn't reenter system
+    
+  # Alternative network sizes tested (Table 1)
+  network_sizes_tested:
+    S1: [2, 10]  # 2 hidden layers of 10 neurons each
+    S2: [4, 20]  # 4 hidden layers of 20 neurons each  
+    S3: [6, 50]  # 6 hidden layers of 50 neurons each
+    S4: [6, 100] # 6 hidden layers of 100 neurons each
+
+# Training configuration
+training:
+  optimizer: "adam"
+  learning_rate:
+    initial: 0.001  # 1e-3 starting value
+    final: 0.0001   # 1e-4 decayed to
+    decay: "exponential"  # Exponentially decayed (paper: from 1e-3 to 1e-4)
+    
+  epochs: 2000  # Maximum training epochs
+  early_stopping:
+    enabled: true
+    patience: 500  # Stop if validation MSE doesn't decrease for 500 epochs
+    min_delta: 0.0001
+    
+  loss:
+    type: "mse"  # Mean Squared Error
+    weights:  # All weights = 1 after scaling (paper: equal impact after scaling)
+      h: 1.0  # Water levels
+      Q: 1.0  # Pipe flows
+      Q_w: 1.0  # Excess flows (surcharge/overflow)
+      
+  # Batch size not specified in paper - using window as batch
+  batch_size: 1  # Each window treated as one batch
+  random_initializations: 5  # Train 5 models with different random seeds
+  
+  # Training windows approach
+  window_initialization: "true_state"  # Initialize from HiFi results at window start
+  validation_initialization: "empty_system"  # Initialize from empty system
+  
+  # Parallel processing (paper mentions parallel window processing)
+  use_parallel_processing: false  # Set based on available hardware
+
+# Evaluation metrics
+evaluation:
+  metrics:
+    - "rmse"  # Root Mean Square Error (untransformed: m for h, m³/s for Q)
+    - "r2"    # R² coefficient of determination
+    - "volume_error"  # Total volume errors (runoff, surcharge, overflow, outflow)
+    
+  # Event-based analysis
+  event_based_analysis: true
+  event_separation: "peak_flow"  # Separate events based on outlet peak flow
+  
+  # Spatial analysis
+  spatial_analysis: true  # R² values per node/link
+
+# Performance benchmarking
+performance:
+  compare_with_swmm: true
+  swmm_time_step: 5  # 5-second time step for HiFi model
+  surrogate_time_step: 60  # 1-minute time step for surrogate
+  
+# System settings
+system:
+  random_seed: 42  # For reproducibility
+  device: "cuda"  # Use GPU if available (paper: single CPU, no GPU benefit mentioned)
+  num_workers: 0  # Data loading workers
+  checkpoint_dir: "checkpoints"
+  results_dir: "results"
+  
+# Note: The paper uses TensorFlow 2.7.0, but we're implementing in PyTorch
+# The hyperparameters are converted to PyTorch equivalents

@@ -1,0 +1,236 @@
+# Logic Analysis: evaluator.py
+
+## 1. **Purpose and Scope**
+The `Evaluator` class serves as the comprehensive assessment module for the physics-constrained gResNet surrogate model. It quantifies performance against ground truth SWMM simulations across multiple metrics, visualizes results, and benchmarks computational efficiency - directly implementing Section 2.6 and 3.x results from the paper.
+
+## 2. **Core Responsibilities**
+
+### 2.1 Metric Computation (Paper Section 2.6 & 3.6)
+**Input Requirements:**
+- Raw/unscaled predictions and targets for h, Q, Q_w
+- Network topology from parser (node/link IDs, adjacency)
+- Event separation criteria (peak flow thresholds)
+
+**Logic Flow:**
+1. **Point-wise metrics per variable type:**
+   - **RMSE**: `sqrt(mean((pred - true)^2))`
+     - For h: units = meters (m)
+     - For Q, Q_w: units = m³/s (CMS as per SWMM)
+     - **Critical**: Must be computed on unscaled data after inverse transformation
+   
+   - **R²**: `1 - (sum((true - pred)^2) / sum((true - mean(true))^2))`
+     - Paper shows values ~0.9 for well-performing surrogates
+     - Must handle zero-variance cases (e.g., nodes with no flow)
+
+2. **Volume-based metrics (Paper Section 3.2):**
+   - Total volume error = `|sum(pred) - sum(true)| * Δt` (Δt = 60s)
+   - Components:
+     - Runoff volume error: sum(R) comparison
+     - Surcharge volume error: sum(Q_w,surcharge) comparison  
+     - Overflow volume error: sum(Q_w,overflow) comparison (though Ji.inp lacks overflow structures)
+     - Outflow volume error: sum(Q_outlet) comparison
+
+3. **Event-based analysis (Paper Figure 4):**
+   - Segment time series into events using outlet peak flow threshold
+   - Compute RMSE per event for each variable type
+   - Plot RMSE vs. event intensity (max outlet flow)
+
+### 2.2 Time Series Visualization (Paper Figures 8-9)
+**Logic Requirements:**
+- Extract time series for specific nodes/links identified during analysis
+- Plot predictions vs. targets for h, Q, Q_w in separate subplots
+- Highlight periods of surcharge activation (Q_w > 0)
+- Annotate with key metrics (RMSE, R²) for the shown element
+- **Critical**: Must show unscaled values in original units
+
+### 2.3 Spatial Performance Mapping (Paper Figure 7)
+**Logic Flow:**
+1. Compute R² per node (for h) and per link (for Q) across entire test series
+2. Map values onto network coordinates:
+   - Nodes: Use [COORDINATES] section from Ji.inp (x,y)
+   - Links: Use coordinates of from/to nodes (or vertices if available)
+3. Create colormap plots:
+   - Node color = R² for h predictions
+   - Link color/thickness = R² for Q predictions
+   - **Note**: The provided Ji.inp has coordinates, enabling actual spatial plots
+
+### 2.4 Performance Benchmarking (Paper Table 2)
+**Comparative Analysis:**
+1. **Surrogate inference time:**
+   - Measure wall-clock time for simulating entire test series
+   - Use autoregressive rollout with constraint layer
+   - Report in seconds
+
+2. **SWMM simulation time:**
+   - Measure time for equivalent SWMM simulation
+   - Use 5-second routing step (from paper and config)
+   - **Important**: Must use same hardware/conditions for fair comparison
+
+3. **Speed-up calculation:**
+   - Speed-up factor = SWMM_time / Surrogate_time
+   - Paper reports 1-2 orders of magnitude speed-up (10-100×)
+
+4. **Training time recording:**
+   - Log total training time (data generation + model training)
+   - Compare with paper's 0.5-2 hour range for ~60-link system
+
+## 3. **Data Flow Dependencies**
+
+### 3.1 Input Sources:
+1. **From `model.py`/`trainer.py`:**
+   - Trained gResNet model
+   - ConstraintLayer (for Q_w computation during evaluation)
+   - Predictions on test set
+
+2. **From `data_processor.py`:**
+   - Scaling parameters (min/max per variable) for inverse transformation
+   - Raw/unscaled test data
+   - Network adjacency for mass balance verification
+
+3. **From `network_parser.py`:**
+   - Node/link IDs and properties
+   - Network coordinates for spatial plotting
+   - Upstream/downstream relationships
+
+### 3.2 Data Transformations:
+```
+Raw predictions (scaled) 
+    → Inverse scaling → Physical units
+    → Compute Q_w via constraint layer → Complete state vector
+    → Compare with unscaled targets → Metrics
+```
+
+## 4. **Implementation Considerations**
+
+### 4.1 Handling Edge Cases:
+1. **Zero-variance variables:**
+   - Some nodes may have constant h (never surcharge)
+   - Some links may have zero flow throughout test series
+   - R² undefined → set to NaN or 0 with appropriate warning
+
+2. **Sparse surcharge events:**
+   - Q_w may be zero for most timesteps
+   - Compute metrics only on timesteps where true Q_w > 0 (per paper's event-based analysis)
+
+3. **Small network limitations:**
+   - Ji.inp has only 6 links vs. paper's 60-87
+   - Spatial plots will be sparse; consider alternative visualization
+
+### 4.2 Metric-Specific Logic:
+
+**RMSE Calculation:**
+```python
+# For water levels
+h_rmse = sqrt(mean((h_pred_meters - h_true_meters)^2))
+
+# For flows (convert to consistent units)
+# SWMM uses CMS; ensure predictions in same units
+q_rmse = sqrt(mean((q_pred_cms - q_true_cms)^2))
+```
+
+**R² Calculation with Bessel's Correction:**
+```python
+# Handle potential zero variance
+variance = sum((true - mean(true))^2)
+if variance < 1e-10:  # Numerical tolerance
+    r2 = 0.0  # Or np.nan
+else:
+    r2 = 1 - sum((true - pred)^2) / variance
+```
+
+**Volume Error (Paper Figure 6C):**
+```python
+# Log-transform with sign preservation
+volume_error = sign(true_volume - pred_volume) * log10(abs(true_volume - pred_volume))
+```
+
+### 4.3 Visualization Details:
+
+**Time Series Plots (Figure 8/9 style):**
+- Subplot 1: h(t) for selected node
+- Subplot 2: Q(t) for selected link  
+- Subplot 3: Q_w,overflow(t) if applicable
+- Subplot 4: Q_w,surcharge(t) for node
+- Include HiFi (crosses), unconstrained surrogate (squares), constrained surrogate (dots)
+
+**Spatial R² Map (Figure 7 style):**
+- Node size proportional to catchment area (not in Ji.inp) or constant
+- Node color: R² for h predictions (viridis colormap)
+- Link width: proportional to pipe diameter (from XSECTIONS)
+- Link color: R² for Q predictions (viridis colormap)
+- Overlay imperviousness if available (not in Ji.inp)
+
+## 5. **Configuration Alignment**
+
+From `config.yaml`:
+- **Metrics**: Must compute RMSE, R², volume_error
+- **Event analysis**: Enabled, separated by "peak_flow"
+- **Spatial analysis**: Enabled (requires coordinates)
+- **Benchmarking**: Compare with SWMM using specified time steps (5s vs 60s)
+
+**Key Parameter Mapping:**
+- `evaluation.metrics`: Direct list of metrics to compute
+- `performance.swmm_time_step`: 5 seconds for HiFi comparison
+- `performance.surrogate_time_step`: 60 seconds for surrogate
+- `system.device`: Use CPU for fair benchmarking (paper used CPU)
+
+## 6. **Integration Points**
+
+### 6.1 With Trainer:
+- Receive best model checkpoint path
+- Load model state dict
+- Get validation/test predictions
+
+### 6.2 With Main Pipeline:
+```python
+# After training completes
+evaluator = Evaluator(
+    model=best_model,
+    constraint_layer=constraint_layer,
+    data_processor=data_processor,
+    network_parser=network_parser,
+    config=config
+)
+
+# Compute metrics
+metrics = evaluator.compute_metrics(
+    predictions=test_predictions,
+    targets=test_targets
+)
+
+# Generate plots
+evaluator.plot_time_series(
+    node_id='3',  # Example node
+    predictions=test_predictions,
+    targets=test_targets,
+    save_path='results/time_series_node3.png'
+)
+
+# Benchmark
+performance = evaluator.benchmark_performance()
+```
+
+## 7. **Validation Against Paper Results**
+
+**Expected Outcomes for Ji.inp:**
+1. **R² values**: Should approach 0.9 for most nodes/links
+2. **RMSE**: 
+   - h: ~few cm (0.01-0.05 m)
+   - Q: ~few L/s (0.001-0.01 m³/s)
+3. **Speed-up**: 10-100× faster than SWMM (depends on network size)
+4. **Constraint impact**: Models with physical constraints should show better Q_w predictions
+
+**Discrepancy Management:**
+- Ji.inp lacks overflow structures → no Q_w,overflow analysis
+- Smaller network may show different error distributions
+- Note limitations in documentation
+
+## 8. **Critical Implementation Details**
+
+1. **Unit Consistency**: Ensure all metrics use physical units (m, m³/s)
+2. **Inverse Scaling**: Must use training-set derived min/max for all data
+3. **Event Detection**: Implement peak-flow based event separation per paper
+4. **Mass Balance Verification**: Use constraint layer during evaluation to ensure consistent Q_w computation
+5. **Reproducibility**: Set random seeds for any stochastic elements (e.g., matplotlib)
+
+This analysis ensures the Evaluator module will produce results directly comparable to those in the paper while adapting to the specific constraints of the provided Ji.inp network file.

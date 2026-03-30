@@ -1,0 +1,278 @@
+# Logic Analysis: swmm_simulator.py
+
+## 1. Core Purpose & Alignment with Paper
+
+The `SWMMSimulator` class is responsible for generating the training data required by the gResNet surrogate model, strictly following the paper's methodology:
+
+**Primary Functions:**
+- Generate labeled training/validation/test data by running SWMM hydrodynamic simulations
+- Extract hydraulic states (water levels, flows, excess flows) at 1-minute intervals
+- Split data into event-based sets following the paper's approach
+- Implement "spilling configuration" as specified in Section 2.2.3
+
+**Critical Paper Requirements:**
+- **Time step alignment:** SWMM runs with 5-second routing steps (paper's HiFi model), results extracted at 1-minute intervals (surrogate Δt)
+- **Spilling configuration:** Water does not re-enter the system when surcharged (Jamali et al., 2018)
+- **Event-based data split:** Not random temporal split, but separate sets of events (Fig. 1c)
+- **State extraction:** All nodes and links must be monitored for h, Q, and Q_w
+
+## 2. Data Generation Strategy Analysis
+
+### 2.1 Addressing Data Limitations
+The provided `Ji.inp` file has minimal data (10 minutes, 2 inflow nodes). The paper uses 40 years of rainfall data. We must generate sufficient training volume (~70k timesteps) while maintaining physical plausibility.
+
+**Solution: Event-Based Data Generation**
+1. **Base event templates:** Use the existing 10-minute inflow patterns as templates
+2. **Event variation:** Create diverse events by:
+   - **Scaling:** Multiply inflow rates by factors (0.1× to 10×) to create low/high flow conditions
+   - **Time scaling:** Stretch/compress event duration (0.5× to 3×)
+   - **Temporal shifting:** Create different temporal patterns within events
+   - **Combination:** Generate different combinations of inflows at nodes 1 & 3
+
+3. **Event concatenation:** Create training series by concatenating events with dry periods between them (mimicking paper's approach)
+
+### 2.2 Event Generation Parameters
+From the paper's data volumes:
+- Training: 73,990 timesteps (~1233 hours)
+- Validation: 19,095 timesteps (~318 hours)
+- Test: Independent series (paper uses 40 years, but we'll generate proportionally)
+
+**Implementation Strategy:**
+```python
+# Pseudocode for event generation
+events = []
+for intensity_level in [0.1, 0.3, 0.5, 0.8, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0]:
+    for duration_factor in [0.5, 0.8, 1.0, 1.5, 2.0, 3.0]:
+        # Create varied events
+        event = scale_base_event(intensity_level, duration_factor)
+        events.append(event)
+
+# Split events into train/val/test sets (70/20/10 ratio)
+train_events, val_events, test_events = split_events_by_ratio(events, [0.7, 0.2, 0.1])
+```
+
+## 3. SWMM Simulation Configuration Analysis
+
+### 3.1 Critical SWMM Settings from Paper
+The paper specifies key HiFi model settings that must be replicated:
+
+**From Section 2.1 & 2.5:**
+- **Routing time step:** 5 seconds (fixed, not adaptive)
+- **Spilling configuration:** "Water does not reenter the drainage system" → In SWMM, this is achieved by:
+  - `ALLOW_PONDING NO` (already set in Ji.inp)
+  - Ensure no re-infiltration or reconnection of surcharged water
+- **Simulation period:** Must cover all generated events
+- **Reporting interval:** 1 minute (aligns with surrogate Δt)
+
+**From Ji.inp file analysis:**
+- Flow routing: DYNWAVE (dynamic wave routing)
+- Inertial damping: PARTIAL
+- Head tolerance: 0.005
+
+### 3.2 Simulation Workflow Logic
+```python
+# Pseudocode for single event simulation
+def simulate_event(inflow_data):
+    # 1. Create temporary .inp file with modified [INFLOWS] and [TIMESERIES]
+    temp_inp = create_modified_inp_file(base_inp, inflow_data)
+    
+    # 2. Configure SWMM with paper's settings
+    swmm_config = {
+        'reporting_step': 60,  # 1-minute reporting
+        'routing_step': 5,     # 5-second routing
+        'allow_ponding': False # Spilling configuration
+    }
+    
+    # 3. Run simulation
+    with Simulation(temp_inp) as sim:
+        # Step through simulation, extracting results at 1-minute intervals
+        results = []
+        current_time = 0
+        while not sim.is_over():
+            sim.step_to(current_time + 60)  # Advance to next minute
+            extract_results_at_current_time(sim)
+            current_time += 60
+    
+    # 4. Clean up temporary file
+    return results
+```
+
+## 4. Data Extraction & Structure Analysis
+
+### 4.1 State Vector Construction
+From Eq. 7 in the paper:
+```
+x_t = [h_1, ..., h_N, Q_1, ..., Q_M]
+```
+
+**Required extraction per timestep:**
+1. **Water levels (h):** For all nodes (junctions + outfalls)
+   - From SWMM: node depth + invert elevation = water level
+2. **Pipe flows (Q):** For all links (conduits)
+   - From SWMM: conduit flow rate (m³/s)
+3. **Excess flows (Q_w):** For all nodes (computed via mass balance in post-processing)
+   - From SWMM: node flooding rate (when available)
+
+**Data structure:**
+```python
+# Each timestep should produce:
+{
+    'timestamp': datetime,
+    'water_levels': {node_id: value},  # meters
+    'pipe_flows': {link_id: value},    # m³/s
+    'excess_flows': {node_id: value},  # m³/s (from SWMM flooding)
+    'inflows': {node_id: value}        # m³/s (boundary conditions)
+}
+```
+
+### 4.2 Time Alignment Logic
+The paper uses 1-minute surrogate time steps but 5-second SWMM steps. We must:
+
+1. **Run SWMM at 5-second intervals** (routing step in Ji.inp)
+2. **Extract results at 1-minute boundaries** (reporting step in Ji.inp)
+3. **Ensure no interpolation** - use the SWMM state exactly at minute boundaries
+
+**Implementation:**
+```python
+# Advance simulation to exact minute boundaries
+target_time = current_time + 60
+while current_time < target_time:
+    sim.step_advance(5)  # 5-second steps
+    current_time += 5
+    
+# Extract at precise minute boundary
+results = extract_at_current_time(sim)
+```
+
+## 5. Event-Based Data Splitting Logic
+
+### 5.1 Paper's Methodology Analysis
+From Section 2.5.2 and Fig. 1c:
+1. **Training:** 154 rain events concatenated (73,990 minutes)
+2. **Validation:** 43 rain events concatenated (19,095 minutes)
+3. **Testing:** Fully independent 40-year series (8,200 events)
+
+**Key Principle:** Events are independent scenarios, not temporal segments of one long simulation.
+
+### 5.2 Implementation Strategy
+```python
+# Generate three independent sets of events
+def generate_data_sets():
+    # Create pool of diverse events
+    all_events = generate_diverse_events()
+    
+    # Split by event characteristics (not randomly)
+    # Training: Mix of low, medium, high intensity events
+    train_events = select_events_by_intensity(all_events, 'balanced')
+    
+    # Validation: Similar distribution but different instances
+    val_events = select_events_by_intensity(all_events, 'balanced')
+    
+    # Test: Fully independent (different statistical properties)
+    test_events = select_events_by_intensity(all_events, 'extreme_bias')
+    
+    # Simulate each event set
+    train_data = concatenate_events(train_events)
+    val_data = concatenate_events(val_events)
+    test_data = concatenate_events(test_events)
+    
+    return {'train': train_data, 'val': val_data, 'test': test_data}
+```
+
+## 6. Spilling Configuration Implementation
+
+### 6.1 Technical Analysis
+The paper cites Jamali et al. (2018): "spilling configuration yields more realistic representations of pressure levels in intense rain storms."
+
+**SWMM Implementation:**
+1. **Ponding disabled:** `ALLOW_PONDING NO` (already in Ji.inp)
+2. **No re-infiltration:** Ensure no groundwater or infiltration from ponded areas
+3. **Flooding as loss:** When nodes flood, water is removed from system
+
+**Verification in Results:**
+- Check that total inflow > total outflow + storage change during surcharge
+- Excess water should not reappear downstream
+
+## 7. Error Handling & Validation Logic
+
+### 7.1 Simulation Validation
+```python
+def validate_simulation(results):
+    # Check mass balance (with tolerance for numerical errors)
+    total_inflow = sum(inflows)
+    total_outflow = sum(outflows_at_outfalls)
+    storage_change = compute_storage_change()
+    
+    mass_balance_error = total_inflow - total_outflow - storage_change
+    
+    if abs(mass_balance_error) > tolerance:
+        logger.warning(f"Mass balance error: {mass_balance_error}")
+    
+    # Check for unrealistic values
+    validate_physical_limits(results)
+```
+
+### 7.2 Data Quality Checks
+- Negative flows in pressurized conditions are acceptable (flow reversal)
+- Water levels should not exceed node max depth + ground elevation
+- Flows should not exceed pipe capacity (but can during surcharge)
+
+## 8. Performance Optimization Considerations
+
+### 8.1 Parallel Processing Strategy
+The paper mentions parallel window processing for training. For simulation:
+
+**Opportunities:**
+1. **Parallel event simulation:** Run independent events simultaneously
+2. **Batched SWMM calls:** Group small events into longer simulations
+
+**Constraints:**
+- SWMM is not inherently parallelizable per simulation
+- File I/O for temporary .inp files may be bottleneck
+
+### 8.2 Memory Management
+- Store results in chunked arrays or streaming to disk
+- Use pandas DataFrames with appropriate dtypes (float32)
+
+## 9. Integration Points Analysis
+
+### 9.1 Dependencies
+- **network_parser.py:** For network topology and initial conditions
+- **config.py:** For simulation parameters (time steps, tolerances)
+- **data_processor.py:** Will consume raw simulation results
+
+### 9.2 Data Flow
+```
+SWMMSimulator.generate_training_series()
+    ↓
+Creates modified .inp files with varied inflows
+    ↓
+Runs SWMM simulations → extracts results at 1-min intervals
+    ↓
+Returns: {
+    'train': {states, inputs, excess_flows},
+    'val': {...},
+    'test': {...},
+    'metadata': {scaling_info, event_info}
+}
+```
+
+## 10. Critical Decisions & Assumptions
+
+### 10.1 Key Assumptions
+1. **Inflow generation:** Since we lack real rainfall data, synthetic but physically plausible inflow hydrographs are acceptable for proof-of-concept
+2. **Event diversity:** We can create sufficient hydraulic diversity through scaling of base patterns
+3. **Spilling configuration:** `ALLOW_PONDING NO` in SWMM adequately implements paper's spilling configuration
+4. **Time alignment:** SWMM's reporting at 1-minute intervals provides adequate state snapshots
+
+### 10.2 Paper Deviations (Documented)
+1. **Data source:** Paper uses real rainfall → we use synthetic inflow variations
+2. **Network scale:** Paper's System 1 has 60 pipes → our Ji.inp has 6 pipes
+3. **Overflow structures:** Paper's system has weirs → our system has none (only surcharges)
+
+### 10.3 Validation Metrics for Data Generation
+- Ensure training data covers full range of hydraulic conditions
+- Verify that extreme events (surcharge) are represented in training
+- Check temporal autocorrelation structure matches expected hydraulics
+
+This logic analysis provides the foundation for implementing `swmm_simulator.py` that faithfully reproduces the paper's data generation methodology while adapting to the constraints of the provided SWMM network file.
