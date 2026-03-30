@@ -3,14 +3,13 @@ AquaGen is the code repository for our paper, introducing a novel framework that
 
 ## AquaGen Demos Overview
 
-This directory contains 6 core example workflows (S1, S2, S4, S5, S5_Claude, S6) related to Urban Drainage Systems (UDS). It comprehensively demonstrates the two core capabilities of the AquaGen framework: **Secure Open-Sourcing of Water Data** and **LLM-Driven Research Code Pipelines**. 
+This directory contains 6 core example workflows (S1, S2, S4, S5, S6) related to Urban Drainage Systems (UDS). It comprehensively demonstrates the two core capabilities of the AquaGen framework: **Secure Open-Sourcing of Water Data** and **LLM-Driven Research Code Pipelines**. 
 
 Covered topics include:
 - Desensitization of low-sensitivity data
 - Synthetic data generation based on mechanistic model (SWMM) outputs and Generative AI
 - Task-oriented modular refactoring (MATLAB PINN code to modular Python)
 - Multi-stage automated pipeline from academic papers to executable code (Paper-to-Code)
-- Physics-constrained gResNet modeling practice
 - Automated code documentation and annotation enhancement
 
 *Note: The `S3/` directory is not included in the current workspace.*
