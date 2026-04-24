@@ -39,6 +39,9 @@ Covered topics include:
   1. The 1st LLM call learns the statistical patterns and variable relationships between real rainfall and pipe network responses.
   2. The 2nd LLM call generates 288 rows (1 day, 5-minute granularity) of synthetic data that adheres to physical hydraulic laws.
 
+### S3: AI supported federated learning
+- **Entry Script:** `S2/S2.py`
+
 ### S4: Task-Oriented Modularization (PINN MATLAB -> Python)
 - **Entry Script:** `S4/S4.py`
 - **Source MATLAB:** `S4/data/InversePinnConstantCoef.m`
