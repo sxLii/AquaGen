@@ -40,7 +40,10 @@ Covered topics include:
   2. The 2nd LLM call generates 288 rows (1 day, 5-minute granularity) of synthetic data that adheres to physical hydraulic laws.
 
 ### S3: AI supported federated learning
-- **Entry Script:** `S2/S2.py`
+- **Generated Code and Entry Script:** `S3/federated_learning_example_v2.py`
+- **Origianl Data:** `S3/original_data.xlsx`
+- **Output model parameters:** `federated_model.pth`
+- **Output model config:** `federated_model_config.pth`
 
 ### S4: Task-Oriented Modularization (PINN MATLAB -> Python)
 - **Entry Script:** `S4/S4.py`
