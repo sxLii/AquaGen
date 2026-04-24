@@ -44,6 +44,7 @@ Covered topics include:
 - **Origianl Data:** `S3/original_data.xlsx`
 - **Output model parameters:** `federated_model.pth`
 - **Output model config:** `federated_model_config.pth`
+- - **Key Features:** Use agentic AI generate federated learning python code for given source data. Run this code to obtain the shareable model parameters.
 
 ### S4: Task-Oriented Modularization (PINN MATLAB -> Python)
 - **Entry Script:** `S4/S4.py`
