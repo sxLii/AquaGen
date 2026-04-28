@@ -2,6 +2,8 @@
 
 AquaGen is a demonstration repository for open-source workflows in water-system research. It shows how sensitive urban drainage data, mechanistic model outputs, research code, and paper-derived methods can be transformed into shareable artifacts with help from large language models (LLMs).
 
+![AquaGen workflow](workflow.png)
+
 The repository is organized into six scenarios:
 
 - **S1**: desensitize low-sensitivity monitoring data.
@@ -58,7 +60,6 @@ pip install pyswmm networkx
 ```
 
 `pyswmm` is required for SWMM extraction and simulation workflows in S2 and S5. CUDA is optional, but useful for the PyTorch training examples in S3, S4, and S5.
-
 
 ## Notes on Reproducibility and Safety
 
