@@ -25,11 +25,11 @@ PAPER_MD   = "S5/data/Paper.md"
 NET_FILE   = "S5/data/Ji.inp"
 OUTPUT_DIR = "S5/results_P2C"
 REPO_DIR   = "S5/results_P2C/repo"
-MODEL      = "deepseek-reasoner"
+MODEL      = "deepseek-v4-pro"
 
 client = OpenAI(
     api_key="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ## Replace with your actual API key
-    base_url="https://api.deepseek.com/v1",
+    base_url="https://api.deepseek.com",
 )
 
 # ── Read inputs ────────────────────────────────────────────────────────────────
@@ -48,50 +48,22 @@ os.makedirs(artifacts_dir, exist_ok=True)
 # ══════════════════════════════════════════════════════════════════════════════
 # Utility functions  (adapted from utils.py)
 # ══════════════════════════════════════════════════════════════════════════════
-
-MODEL_CTX = 131072   # deepseek-reasoner context window
-
 def api_call(messages, max_tokens=16000):
-    """
-    Call deepseek-reasoner; strip <think>…</think> from the response.
-    On 400 context-overflow, parse the reported prompt token count from the
-    error message and retry with the remaining budget.
-    """
-    from openai import BadRequestError
-    import re as _re
-
+    """Call deepseek-v4-pro; strip <think>…</think> from the response."""
     def _clean(resp_content):
         if "</think>" in resp_content:
             resp_content = resp_content.split("</think>")[-1].strip()
         return resp_content
 
-    try:
-        resp = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            max_tokens=max_tokens,
-            stream=False,
-        )
-        return _clean(resp.choices[0].message.content or "")
-
-    except BadRequestError as e:
-        msg = str(e)
-        # Extract prompt token count from error message, e.g.
-        # "... you requested 134920 tokens (70920 in the messages, 64000 in the completion)"
-        m = _re.search(r'\((\d+) in the messages', msg)
-        if m:
-            prompt_tokens = int(m.group(1))
-            safe_max = max(MODEL_CTX - prompt_tokens - 512, 1024)
-            print(f"  [warn] Context overflow — prompt={prompt_tokens} tokens. "
-                  f"Retrying with max_tokens={safe_max}.")
-            resp = client.chat.completions.create(
-                model=MODEL,
-                messages=messages,
-                max_tokens=safe_max,
-                stream=False,
-            )
-            return _clean(resp.choices[0].message.content or "")
-        raise
+    resp = client.chat.completions.create(
+        model=MODEL,
+        messages=messages,
+        max_tokens=max_tokens,
+        stream=False,
+        reasoning_effort="high",
+        extra_body={"thinking": {"type": "enabled"}}
+    )
+    return _clean(resp.choices[0].message.content or "")
 
 
 def content_to_json(data: str) -> dict:
