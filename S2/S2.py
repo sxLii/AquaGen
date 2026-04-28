@@ -19,7 +19,7 @@ SYNTH_ROWS   = 288   # 1 day x 12 steps/hour x 24 hours
 
 client = OpenAI(
     api_key="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ## Replace with your actual API key
-    base_url="https://api.deepseek.com/v1",
+    base_url="https://api.deepseek.com",
 )
 
 # ── Read raw data and extract statistical summary ─────────────────────────────
@@ -74,12 +74,14 @@ LEARN_USER = f"""Analyze the following real data profile and extract generation 
 
 print("Step 1: LLM learning data patterns...")
 learn_response = client.chat.completions.create(
-    model="deepseek-reasoner",
+    model="deepseek-v4-flash",
     messages=[
         {"role": "system", "content": LEARN_SYSTEM},
         {"role": "user",   "content": LEARN_USER},
     ],
     stream=False,
+    reasoning_effort="high",
+    extra_body={"thinking": {"type": "enabled"}}
 )
 
 learn_content = learn_response.choices[0].message.content.strip()
@@ -114,12 +116,14 @@ SYNTH_USER = f"""Generate exactly {SYNTH_ROWS} rows of synthetic data using thes
 
 print(f"\nStep 2: LLM synthesizing {SYNTH_ROWS} rows...")
 synth_response = client.chat.completions.create(
-    model="deepseek-reasoner",
+    model="deepseek-v4-flash",
     messages=[
         {"role": "system", "content": SYNTH_SYSTEM},
         {"role": "user",   "content": SYNTH_USER},
     ],
     stream=False,
+    reasoning_effort="high",
+    extra_body={"thinking": {"type": "enabled"}}
 )
 
 

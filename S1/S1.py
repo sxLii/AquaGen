@@ -8,7 +8,7 @@ OUTPUT_JSON = "S1/results/desensitized_output.json"
 
 client = OpenAI(
     api_key="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ## Replace with your actual API key
-    base_url="https://api.deepseek.com/v1",
+    base_url="https://api.deepseek.com",
 )
 
 # ── Read raw CSV ──────────────────────────────────────────────────────────────
@@ -41,12 +41,14 @@ USER_PROMPT = f"""Desensitize the following raw CSV data and return the result a
 
 # ── Call LLM ──────────────────────────────────────────────────────────────────
 response = client.chat.completions.create(
-    model="deepseek-reasoner",
+    model="deepseek-v4-pro",
     messages=[
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user",   "content": USER_PROMPT},
     ],
     stream=False,  # disable streaming output and wait for the full result
+    reasoning_effort="high",
+    extra_body={"thinking": {"type": "enabled"}}
 )
 
 content = response.choices[0].message.content.strip()

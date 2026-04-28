@@ -19,7 +19,7 @@ OUTPUT_DIR   = "S4/results"
 
 client = OpenAI(
     api_key="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ## Replace with your actual API key
-    base_url="https://api.deepseek.com/v1",
+    base_url="https://api.deepseek.com",
 )
 
 # ── Read MATLAB source code and task requirements ─────────────────────────────
@@ -58,13 +58,15 @@ Task requirements (modular design principles):
 
 print("Step 1: LLM planning modular architecture...")
 plan_response = client.chat.completions.create(
-    model="deepseek-reasoner",
+    model="deepseek-v4-flash",
     messages=[
         {"role": "system", "content": PLAN_SYSTEM},
         {"role": "user",   "content": PLAN_USER},
     ],
-    max_tokens=64000,
+    # max_tokens=64000,
     stream=False,
+    reasoning_effort="high",
+    extra_body={"thinking": {"type": "enabled"}}
 )
 
 plan_content = plan_response.choices[0].message.content.strip()
@@ -107,13 +109,15 @@ Original MATLAB code:
 
 print("\nStep 2: LLM generating Python code for each module...")
 gen_response = client.chat.completions.create(
-    model="deepseek-reasoner",
+    model="deepseek-v4-pro",
     messages=[
         {"role": "system", "content": GEN_SYSTEM},
         {"role": "user",   "content": GEN_USER},
     ],
-    max_tokens=64000,
+    # max_tokens=64000,
     stream=False,
+    reasoning_effort="high",
+    extra_body={"thinking": {"type": "enabled"}}
 )
 
 gen_content = gen_response.choices[0].message.content.strip()

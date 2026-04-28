@@ -23,7 +23,7 @@ OUTPUT_DIR = "S6/case1/results"
 
 client = OpenAI(
     api_key="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ## Replace with your actual API key
-    base_url="https://api.deepseek.com/v1",
+    base_url="https://api.deepseek.com",
 )
 
 # ── Read all source files ─────────────────────────────────────────────────────
@@ -91,12 +91,15 @@ ANALYZE_USER = f"Source files to analyze:\n\n{all_code}"
 
 print("\nStep 1 (chat): analyzing code and extracting project spec...")
 analyze_response = client.chat.completions.create(
-    model="deepseek-chat",
+    model="deepseek-v4-flash",
     messages=[
         {"role": "system", "content": ANALYZE_SYSTEM},
         {"role": "user",   "content": ANALYZE_USER},
     ],
     stream=False,
+    # reasoning_effort="high",
+    extra_body={"thinking": {"type": "disabled"}}
+    
 )
 
 spec = json.loads(_strip_fence(analyze_response.choices[0].message.content))
@@ -160,12 +163,14 @@ DOCS_USER = f"Project specification:\n\n{json.dumps(spec, indent=2)}"
 
 print("\nStep 2 (chat): generating documentation files (readme.md / requirements.txt / open_source_guide.md)...")
 docs_response = client.chat.completions.create(
-    model="deepseek-chat",
+    model="deepseek-v4-flash",
     messages=[
         {"role": "system", "content": DOCS_SYSTEM},
         {"role": "user",   "content": DOCS_USER},
     ],
     stream=False,
+    # reasoning_effort="high",
+    extra_body={"thinking": {"type": "disabled"}}
 )
 
 docs_files = json.loads(_strip_fence(docs_response.choices[0].message.content))
@@ -207,13 +212,15 @@ Source files to annotate:
 
 print("\nStep 3 (reasoner): adding inline comments to source code...")
 annotate_response = client.chat.completions.create(
-    model="deepseek-reasoner",
+    model="deepseek-v4-pro",
     messages=[
         {"role": "system", "content": ANNOTATE_SYSTEM},
         {"role": "user",   "content": ANNOTATE_USER},
     ],
-    max_tokens=64000,
+    max_tokens=100000,
     stream=False,
+    reasoning_effort="high",
+    extra_body={"thinking": {"type": "enabled"}}
 )
 
 try:
