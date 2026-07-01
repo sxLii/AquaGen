@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keyword Relationship Network</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing: border-box; }
+  body {
+    font-family: Arial, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .container {
+    max-width: 1400px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.10);
+    padding: 20px 24px;
+    position: relative;
+  }
+  .main-area { display: flex; gap: 14px; }
+  .chart-wrapper { flex: 1; position: relative; min-width: 0; overflow: visible; }
+  #chart { width: 100%; height: 780px; }
+  .right-panel {
+    width: 240px; font-size: 15px; line-height: 1.5; flex-shrink: 0; color: #444;
+  }
+  .right-panel h3 {
+    font-size: 18px; margin-bottom: 6px; color: #222;
+    border-bottom: 1px solid #e0e0e0; padding-bottom: 5px;
+  }
+  .legend-item { display: flex; align-items: center; margin: 3px 0; font-size: 15px; }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; flex-shrink: 0;
+  }
+  .section { margin-bottom: 14px; }
+  .stat-row { display: flex; justify-content: space-between; margin: 3px 0; font-size: 15px; }
+  .stat-val { color: #222; font-weight: bold; }
+  .note {
+    font-size: 14px; color: #999; margin-top: 10px; line-height: 1.6;
+    border-top: 1px solid #e0e0e0; padding-top: 8px;
+  }
+  .kb-bar {
+    display: flex; gap: 20px; align-items: center; font-size: 13px; color: #777;
+    padding: 6px 12px; background: #f7f8fa; border-radius: 6px; margin-top: 12px;
+    justify-content: center; font-family: Arial, sans-serif;
+  }
+  .kb-bar kbd {
+    display: inline-block; padding: 2px 8px; background: #e8e8e8; border: 1px solid #ccc;
+    border-radius: 4px; font-size: 12px; font-weight: bold; color: #333;
+    margin: 0 3px; font-family: Arial, sans-serif;
+  }
+  .kb-bar .hint-msg { color: #4A7EC5; font-weight: bold; margin-left: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="main-area">
+    <div class="chart-wrapper">
+      <div id="chart"></div>
+    </div>
+    <div class="right-panel">
+      <div class="section">
+        <h3>Legend</h3>
+        <div style="font-size:14px;color:#999;margin-bottom:4px">Water Systems</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#C0392B"></span>Water Supply</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#D6554A"></span>Drainage</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#E27469"></span>Wastewater Treatment</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ED9488"></span>Drinking Water Treatment</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#F5B7A7"></span>Natural Waters</div>
+        <div style="margin:8px 0; border-top:1px dashed #ddd"></div>
+        <div style="font-size:14px;color:#999;margin-bottom:4px">AI Methods</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#4A7EC5"></span>Machine Learning</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#5B9AD8"></span>Deep Learning</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#7DB8EB"></span>Reinforcement Learning</div>
+      </div>
+      <div class="section">
+        <h3>Statistics</h3>
+        <div class="stat-row"><span>Articles</span><span class="stat-val">803</span></div>
+        <div class="stat-row"><span>Water Keywords</span><span class="stat-val">29</span></div>
+        <div class="stat-row"><span>AI Keywords</span><span class="stat-val">14</span></div>
+        <div class="stat-row"><span>Water-AI Cross Co-occurrence</span><span class="stat-val">110</span></div>
+      </div>
+      <div class="note">
+        Edge thickness = co-occurrence frequency<br>
+        Node size = keyword frequency
+      </div>
+    </div>
+  </div>
+  <div class="kb-bar">
+    <span>Shortcuts:</span>
+    <span><kbd>S</kbd> Save node positions</span>
+    <span><kbd>E</kbd> Export high-res PNG</span>
+    <span class="hint-msg" id="kb-hint"></span>
+  </div>
+</div>
+
+<script>
+var categories = [
+    {name: 'Water Systems', itemStyle: {color: '#C0392B'}},
+    {name: 'AI Methods', itemStyle: {color: '#4A7EC5'}}
+];
+
+var nodesData = [
+      {id: "water distribution", name: "water distribution", symbolSize: 39,
+       x: -189, y: 111, category: 0,
+       itemStyle: {color: "#C0392B", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Water Supply", domainType: "water",
+       count: 87, articleCount: 87},      {id: "water supply", name: "water supply", symbolSize: 16,
+       x: 394, y: 394, category: 0,
+       itemStyle: {color: "#C0392B", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Water Supply", domainType: "water",
+       count: 9, articleCount: 9},      {id: "sewer", name: "sewer", symbolSize: 35,
+       x: 42, y: 342, category: 0,
+       itemStyle: {color: "#E27469", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drainage", domainType: "water",
+       count: 71, articleCount: 75},      {id: "drainage", name: "drainage", symbolSize: 29,
+       x: 123, y: 123, category: 0,
+       itemStyle: {color: "#E27469", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drainage", domainType: "water",
+       count: 44, articleCount: 44},      {id: "stormwater", name: "stormwater", symbolSize: 20,
+       x: -76, y: 224, category: 0,
+       itemStyle: {color: "#E27469", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drainage", domainType: "water",
+       count: 15, articleCount: 15},      {id: "storm water", name: "storm water", symbolSize: 12,
+       x: 188, y: 188, category: 0,
+       itemStyle: {color: "#E27469", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drainage", domainType: "water",
+       count: 2, articleCount: 2},      {id: "river", name: "river", symbolSize: 31,
+       x: 264, y: 264, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 50, articleCount: 56},      {id: "lake", name: "lake", symbolSize: 26,
+       x: -35, y: 265, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 34, articleCount: 39},      {id: "reservoir", name: "reservoir", symbolSize: 19,
+       x: 57, y: 357, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 13, articleCount: 13},      {id: "watershed", name: "watershed", symbolSize: 15,
+       x: 2, y: 302, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 7, articleCount: 7},      {id: "catchment", name: "catchment", symbolSize: 12,
+       x: 247, y: 247, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 3, articleCount: 3},      {id: "stream", name: "stream", symbolSize: 12,
+       x: -115, y: 185, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 2, articleCount: 2},      {id: "coastal", name: "coastal", symbolSize: 15,
+       x: 126, y: 126, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 7, articleCount: 7},      {id: "ocean", name: "ocean", symbolSize: 12,
+       x: 114, y: 114, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 1, articleCount: 1},      {id: "marine", name: "marine", symbolSize: 12,
+       x: -1, y: 299, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 1, articleCount: 1},      {id: "sea", name: "sea", symbolSize: 12,
+       x: 149, y: 149, category: 0,
+       itemStyle: {color: "#F5B7A7", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Natural Waters", domainType: "water",
+       count: 1, articleCount: 1},      {id: "wastewater", name: "wastewater", symbolSize: 43,
+       x: 126, y: 126, category: 0,
+       itemStyle: {color: "#D6554A", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Wastewater Treatment", domainType: "water",
+       count: 109, articleCount: 109},      {id: "effluent", name: "effluent", symbolSize: 21,
+       x: 50, y: 350, category: 0,
+       itemStyle: {color: "#D6554A", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Wastewater Treatment", domainType: "water",
+       count: 19, articleCount: 19},      {id: "sewage", name: "sewage", symbolSize: 12,
+       x: 18, y: 318, category: 0,
+       itemStyle: {color: "#D6554A", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Wastewater Treatment", domainType: "water",
+       count: 2, articleCount: 2},      {id: "drinking water", name: "drinking water", symbolSize: 24,
+       x: 341, y: 341, category: 0,
+       itemStyle: {color: "#ED9488", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drinking Water Treatment", domainType: "water",
+       count: 26, articleCount: 13},      {id: "water treatment", name: "water treatment", symbolSize: 18,
+       x: -161, y: 139, category: 0,
+       itemStyle: {color: "#ED9488", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drinking Water Treatment", domainType: "water",
+       count: 12, articleCount: 12},      {id: "potable water", name: "potable water", symbolSize: 12,
+       x: -197, y: 103, category: 0,
+       itemStyle: {color: "#ED9488", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drinking Water Treatment", domainType: "water",
+       count: 2, articleCount: 2},      {id: "flood", name: "flood", symbolSize: 41,
+       x: 147, y: 147, category: 0,
+       itemStyle: {color: "#E27469", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drainage", domainType: "water",
+       count: 102, articleCount: 88},      {id: "inundation", name: "inundation", symbolSize: 16,
+       x: -169, y: 131, category: 0,
+       itemStyle: {color: "#E27469", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drainage", domainType: "water",
+       count: 8, articleCount: 8},      {id: "waterlogging", name: "waterlogging", symbolSize: 12,
+       x: 357, y: 357, category: 0,
+       itemStyle: {color: "#E27469", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Drainage", domainType: "water",
+       count: 1, articleCount: 1},      {id: "water quality", name: "water quality", symbolSize: 36,
+       x: 72, y: 372, category: 0,
+       itemStyle: {color: "#D6554A", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Wastewater Treatment", domainType: "water",
+       count: 75, articleCount: 74},      {id: "pollution", name: "pollution", symbolSize: 19,
+       x: -24, y: 276, category: 0,
+       itemStyle: {color: "#D6554A", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Wastewater Treatment", domainType: "water",
+       count: 13, articleCount: 8},      {id: "contamination", name: "contamination", symbolSize: 16,
+       x: -116, y: 184, category: 0,
+       itemStyle: {color: "#D6554A", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Wastewater Treatment", domainType: "water",
+       count: 9, articleCount: 7},      {id: "water pollution", name: "water pollution", symbolSize: 12,
+       x: 204, y: 204, category: 0,
+       itemStyle: {color: "#D6554A", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Wastewater Treatment", domainType: "water",
+       count: 3, articleCount: 2},      {id: "machine learning", name: "machine learning", symbolSize: 55,
+       x: 49, y: 99, category: 1,
+       itemStyle: {color: "#4A7EC5", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Machine Learning", domainType: "ai",
+       count: 195, articleCount: 194},      {id: "xgboost", name: "xgboost", symbolSize: 12,
+       x: 351, y: 201, category: 1,
+       itemStyle: {color: "#4A7EC5", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Machine Learning", domainType: "ai",
+       count: 3, articleCount: 3},      {id: "svm", name: "svm", symbolSize: 12,
+       x: -31, y: 219, category: 1,
+       itemStyle: {color: "#4A7EC5", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Machine Learning", domainType: "ai",
+       count: 1, articleCount: 1},      {id: "gradient boosting", name: "gradient boosting", symbolSize: 12,
+       x: 148, y: 198, category: 1,
+       itemStyle: {color: "#4A7EC5", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Machine Learning", domainType: "ai",
+       count: 1, articleCount: 1},      {id: "deep learning", name: "deep learning", symbolSize: 47,
+       x: 204, y: 54, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 138, articleCount: 139},      {id: "neural network", name: "neural network", symbolSize: 34,
+       x: 181, y: 231, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 64, articleCount: 64},      {id: "lstm", name: "lstm", symbolSize: 26,
+       x: 238, y: 88, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 34, articleCount: 35},      {id: "cnn", name: "cnn", symbolSize: 19,
+       x: -132, y: 118, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 14, articleCount: 14},      {id: "transformer", name: "transformer", symbolSize: 19,
+       x: 319, y: 169, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 13, articleCount: 13},      {id: "attention", name: "attention", symbolSize: 19,
+       x: 84, y: 134, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 13, articleCount: 13},      {id: "deep neural", name: "deep neural", symbolSize: 17,
+       x: -18, y: 232, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 10, articleCount: 6},      {id: "autoencoder", name: "autoencoder", symbolSize: 13,
+       x: 386, y: 236, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 4, articleCount: 4},      {id: "rnn", name: "rnn", symbolSize: 12,
+       x: -84, y: 166, category: 1,
+       itemStyle: {color: "#5B9AD8", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Deep Learning", domainType: "ai",
+       count: 3, articleCount: 3},      {id: "reinforcement learning", name: "reinforcement learning", symbolSize: 26,
+       x: 268, y: 118, category: 1,
+       itemStyle: {color: "#7DB8EB", borderColor: "#fff", borderWidth: 2, shadowBlur: 4, shadowColor: "rgba(0,0,0,0.1)"},
+       domain: "Reinforcement Learning", domainType: "ai",
+       count: 33, articleCount: 33}
+];
+
+var linksData = [
+      {source: "machine learning", target: "wastewater", value: 37, lineStyle: {color: "rgba(130,130,150,0.70)", width: 5.0, curveness: 0.2}},      {source: "machine learning", target: "water quality", value: 24, lineStyle: {color: "rgba(130,130,150,0.70)", width: 5.0, curveness: 0.2}},      {source: "deep learning", target: "water quality", value: 23, lineStyle: {color: "rgba(130,130,150,0.70)", width: 5.0, curveness: 0.2}},      {source: "deep learning", target: "river", value: 21, lineStyle: {color: "rgba(130,130,150,0.69)", width: 5.0, curveness: 0.2}},      {source: "flood", target: "machine learning", value: 19, lineStyle: {color: "rgba(130,130,150,0.64)", width: 5.0, curveness: 0.2}},      {source: "effluent", target: "wastewater", value: 17, lineStyle: {color: "rgba(130,130,150,0.59)", width: 5.0, curveness: 0.2}},      {source: "deep learning", target: "wastewater", value: 16, lineStyle: {color: "rgba(130,130,150,0.56)", width: 4.8, curveness: 0.2}},      {source: "deep learning", target: "flood", value: 15, lineStyle: {color: "rgba(130,130,150,0.54)", width: 4.5, curveness: 0.2}},      {source: "river", target: "water quality", value: 14, lineStyle: {color: "rgba(130,130,150,0.51)", width: 4.2, curveness: 0.2}},      {source: "lake", target: "machine learning", value: 12, lineStyle: {color: "rgba(130,130,150,0.46)", width: 3.6, curveness: 0.2}},      {source: "deep learning", target: "sewer", value: 11, lineStyle: {color: "rgba(130,130,150,0.44)", width: 3.3, curveness: 0.2}},      {source: "machine learning", target: "sewer", value: 10, lineStyle: {color: "rgba(130,130,150,0.41)", width: 3.0, curveness: 0.2}},      {source: "neural network", target: "water distribution", value: 10, lineStyle: {color: "rgba(130,130,150,0.41)", width: 3.0, curveness: 0.2}},      {source: "drainage", target: "reinforcement learning", value: 9, lineStyle: {color: "rgba(130,130,150,0.39)", width: 2.7, curveness: 0.2}},      {source: "machine learning", target: "water treatment", value: 9, lineStyle: {color: "rgba(130,130,150,0.39)", width: 2.7, curveness: 0.2}},      {source: "machine learning", target: "water distribution", value: 9, lineStyle: {color: "rgba(130,130,150,0.39)", width: 2.7, curveness: 0.2}},      {source: "cnn", target: "lstm", value: 9, lineStyle: {color: "rgba(130,130,150,0.39)", width: 2.7, curveness: 0.2}},      {source: "deep learning", target: "lake", value: 8, lineStyle: {color: "rgba(130,130,150,0.36)", width: 2.4, curveness: 0.2}},      {source: "deep learning", target: "water distribution", value: 8, lineStyle: {color: "rgba(130,130,150,0.36)", width: 2.4, curveness: 0.2}},      {source: "neural network", target: "wastewater", value: 8, lineStyle: {color: "rgba(130,130,150,0.36)", width: 2.4, curveness: 0.2}},      {source: "lake", target: "neural network", value: 8, lineStyle: {color: "rgba(130,130,150,0.36)", width: 2.4, curveness: 0.2}},      {source: "machine learning", target: "river", value: 8, lineStyle: {color: "rgba(130,130,150,0.36)", width: 2.4, curveness: 0.2}},      {source: "lstm", target: "wastewater", value: 8, lineStyle: {color: "rgba(130,130,150,0.36)", width: 2.4, curveness: 0.2}},      {source: "drainage", target: "flood", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "reinforcement learning", target: "stormwater", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "drinking water", target: "machine learning", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "reinforcement learning", target: "wastewater", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "neural network", target: "river", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "lstm", target: "river", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "deep learning", target: "lstm", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "flood", target: "river", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "lake", target: "water quality", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "neural network", target: "water quality", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "water distribution", target: "water quality", value: 7, lineStyle: {color: "rgba(130,130,150,0.34)", width: 2.1, curveness: 0.2}},      {source: "flood", target: "inundation", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "flood", target: "neural network", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "flood", target: "flood", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "lake", target: "lake", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "deep learning", target: "effluent", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "river", target: "river", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "deep learning", target: "reservoir", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "cnn", target: "deep learning", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "lstm", target: "water quality", value: 6, lineStyle: {color: "rgba(130,130,150,0.31)", width: 1.8, curveness: 0.2}},      {source: "lstm", target: "neural network", value: 5, lineStyle: {color: "rgba(130,130,150,0.29)", width: 1.5, curveness: 0.2}},      {source: "cnn", target: "river", value: 5, lineStyle: {color: "rgba(130,130,150,0.29)", width: 1.5, curveness: 0.2}},      {source: "inundation", target: "machine learning", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "drainage", target: "neural network", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "flood", target: "lstm", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "sewer", target: "sewer", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "flood", target: "stormwater", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "drainage", target: "machine learning", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "contamination", target: "drinking water", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "wastewater", target: "water quality", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "effluent", target: "machine learning", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "cnn", target: "water quality", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "lstm", target: "water distribution", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "deep learning", target: "watershed", value: 4, lineStyle: {color: "rgba(130,130,150,0.26)", width: 1.2, curveness: 0.2}},      {source: "deep learning", target: "drainage", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "reinforcement learning", target: "sewer", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "coastal", target: "machine learning", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "coastal", target: "flood", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "deep learning", target: "transformer", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "flood", target: "reinforcement learning", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "contamination", target: "machine learning", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "effluent", target: "water quality", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "effluent", target: "neural network", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "reservoir", target: "water quality", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "attention", target: "deep learning", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "contamination", target: "water distribution", value: 3, lineStyle: {color: "rgba(130,130,150,0.24)", width: 0.9, curveness: 0.2}},      {source: "neural network", target: "sewer", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "drainage", target: "lstm", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "pollution", target: "river", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "cnn", target: "sewer", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "sewer", target: "transformer", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "coastal", target: "reinforcement learning", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "coastal", target: "stormwater", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "transformer", target: "wastewater", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "deep learning", target: "neural network", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "attention", target: "river", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "attention", target: "lstm", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "attention", target: "cnn", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "deep neural", target: "flood", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "river", target: "water pollution", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "attention", target: "water supply", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "deep learning", target: "water supply", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "transformer", target: "water distribution", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "lake", target: "reservoir", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "flood", target: "xgboost", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "catchment", target: "machine learning", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "machine learning", target: "pollution", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "pollution", target: "sewer", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "coastal", target: "water quality", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "attention", target: "wastewater", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "effluent", target: "lstm", value: 2, lineStyle: {color: "rgba(130,130,150,0.21)", width: 0.6, curveness: 0.2}},      {source: "autoencoder", target: "inundation", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "autoencoder", target: "flood", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "cnn", target: "transformer", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "coastal", target: "drainage", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "river", target: "wastewater", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "drinking water", target: "pollution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep learning", target: "rnn", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "attention", target: "transformer", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "river", target: "transformer", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "pollution", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep learning", target: "pollution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep learning", target: "potable water", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "water quality", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep learning", target: "deep learning", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "lake", target: "lstm", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "cnn", target: "lake", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep neural", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep neural", target: "lstm", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "catchment", target: "deep learning", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "lstm", target: "reservoir", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reinforcement learning", target: "river", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "neural network", target: "water pollution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "attention", target: "lake", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "cnn", target: "flood", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "neural network", target: "water supply", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "potable water", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reinforcement learning", target: "water distribution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "pollution", target: "reinforcement learning", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "pollution", target: "water distribution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "lstm", target: "lstm", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "svm", target: "water distribution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "cnn", target: "water distribution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "cnn", target: "svm", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "autoencoder", target: "deep learning", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "attention", target: "autoencoder", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "rnn", target: "water distribution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "lstm", target: "rnn", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "contamination", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "machine learning", target: "water supply", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reinforcement learning", target: "water supply", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "attention", target: "water distribution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "coastal", target: "river", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "machine learning", target: "reservoir", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reservoir", target: "river", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "lake", target: "river", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "river", target: "xgboost", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "machine learning", target: "ocean", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "cnn", target: "reservoir", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep learning", target: "inundation", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reinforcement learning", target: "waterlogging", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "stormwater", target: "waterlogging", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reservoir", target: "watershed", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "gradient boosting", target: "machine learning", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "gradient boosting", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "autoencoder", target: "gradient boosting", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "autoencoder", target: "machine learning", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "autoencoder", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reinforcement learning", target: "transformer", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reinforcement learning", target: "reservoir", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reservoir", target: "transformer", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "neural network", target: "transformer", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "machine learning", target: "watershed", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep learning", target: "water treatment", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "flood", target: "transformer", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "pollution", target: "watershed", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "machine learning", target: "sea", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "lake", target: "pollution", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "water quality", target: "water treatment", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep learning", target: "stream", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "drinking water", target: "river", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "flood", target: "reservoir", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "reinforcement learning", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "stormwater", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "drainage", target: "stormwater", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "effluent", target: "transformer", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "transformer", target: "water treatment", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "deep learning", target: "reinforcement learning", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "sewer", target: "wastewater", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "neural network", target: "rnn", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "rnn", target: "water quality", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "rnn", target: "wastewater", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "effluent", target: "rnn", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "cnn", target: "wastewater", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "attention", target: "effluent", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "cnn", target: "effluent", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "autoencoder", target: "wastewater", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "autoencoder", target: "lstm", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "machine learning", target: "stormwater", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "catchment", target: "stormwater", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}},      {source: "catchment", target: "flood", value: 1, lineStyle: {color: "rgba(130,130,150,0.18)", width: 0.4, curveness: 0.2}}
+];
+
+var option = {
+    backgroundColor: 'transparent',
+    tooltip: {
+        formatter: function(p) {
+            if (p.dataType === 'edge') {
+                return '<b>' + p.data.source + '</b><br/>'
+                     + '↔ <b>' + p.data.target + '</b><br/>'
+                     + '<span style="color:#C0392B">Co-occurrence: ' + p.data.value + '</span>';
+            }
+            if (p.dataType === 'node') {
+                var dt = p.data.domainType === 'water' ? 'Water System' : 'AI Method';
+                return '<span style="font-weight:bold;font-size:14px">' + p.name + '</span><br/>'
+                     + 'Category: ' + dt + '<br/>'
+                     + 'Domain: ' + p.data.domain + '<br/>'
+                     + 'Frequency: ' + p.data.count + '<br/>'
+                     + 'Articles: ' + p.data.articleCount;
+            }
+            return '';
+        },
+        backgroundColor: 'rgba(255,255,255,0.97)',
+        borderColor: 'rgba(0,0,0,0.15)',
+        textStyle: {color: '#333', fontSize: 14}
+    },
+    legend: { show: false },
+    series: [{
+        type: 'graph',
+        layout: 'force',
+        categories: categories,
+        data: nodesData,
+        links: linksData,
+        roam: true,
+        draggable: true,
+        force: {
+            repulsion: 180,
+            edgeLength: [30, 160],
+            gravity: 0.30,
+            layoutAnimation: true,
+            friction: 0.6
+        },
+        emphasis: {
+            focus: 'adjacency',
+            lineStyle: {width: 3, color: 'rgba(80,80,100,0.7)'},
+            itemStyle: {borderColor: '#333', borderWidth: 2, shadowBlur: 15, shadowColor: 'rgba(0,0,0,0.2)'},
+            label: {fontSize: 15, fontWeight: 'bold', color: '#333'}
+        },
+        lineStyle: {
+            color: 'rgba(130,130,150,0.3)',
+            curveness: 0.2
+        },
+        label: {
+            show: true,
+            position: 'right',
+            fontSize: 14,
+            color: '#666',
+            formatter: function(p) { return p.name; }
+        }
+    }]
+};
+
+var chart = echarts.init(document.getElementById('chart'), 'white', { devicePixelRatio: 2 });
+chart.setOption(option);
+
+window.addEventListener('resize', function() { chart.resize(); });
+
+// ====== Keyboard Shortcuts ======
+document.addEventListener('keydown', function(e) {
+    // S: lock current node positions → output to console
+    if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        var positions = [];
+        var seriesModel = chart.getModel().getSeriesByIndex(0);
+        if (seriesModel) {
+            var data = seriesModel.getData();
+            nodesData.forEach(function(n, i) {
+                var layout = data.getItemLayout(i);
+                if (layout) {
+                    positions.push({ id: n.id, x: Math.round(layout.x), y: Math.round(layout.y) });
+                }
+            });
+        }
+        console.log('========== NODE POSITIONS (locked) ==========');
+        console.log(JSON.stringify(positions, null, 2));
+        console.log('========== Copy the x,y values into nodesData, then set layout: "none" ==========');
+        var hint = document.getElementById('kb-hint');
+        if (hint) { hint.textContent = 'Positions copied to console (F12)'; }
+    }
+
+    // E: export high-res PNG (chart + right panel, no left blank)
+    if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        var hint = document.getElementById('kb-hint');
+        if (hint) { hint.textContent = 'Capturing...'; }
+
+        var kbBar = document.querySelector('.kb-bar');
+        if (kbBar) kbBar.style.display = 'none';
+
+        // Remove container left-padding temporarily
+        var container = document.querySelector('.container');
+        var origPadding = container.style.padding;
+        container.style.padding = '20px 24px 20px 0';
+
+        // Step 1: get ECharts chart as 4x PNG data URL
+        var chartUrl = chart.getDataURL({
+            type: 'png',
+            pixelRatio: 4,
+            backgroundColor: '#ffffff'
+        });
+
+        // Step 2: capture right panel with html2canvas at 4x
+        html2canvas(document.querySelector('.right-panel'), {
+            scale: 4,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true,
+            logging: false
+        }).then(function(panelCanvas) {
+            // Step 3: composite chart image + panel canvas side by side
+            var chartImg = new Image();
+            chartImg.onload = function() {
+                var gap = 14 * 4;
+                var totalW = chartImg.width + gap + panelCanvas.width;
+                var totalH = Math.max(chartImg.height, panelCanvas.height);
+
+                var composite = document.createElement('canvas');
+                composite.width = totalW;
+                composite.height = totalH;
+                var ctx = composite.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, totalW, totalH);
+                ctx.drawImage(chartImg, 0, 0, chartImg.width, chartImg.height);
+                ctx.drawImage(panelCanvas, chartImg.width + gap, 0, panelCanvas.width, panelCanvas.height);
+
+                // Download
+                var a = document.createElement('a');
+                a.href = composite.toDataURL('image/png');
+                a.download = 'keyword_network_4x.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // Restore
+                container.style.padding = origPadding;
+                if (kbBar) kbBar.style.display = '';
+                if (hint) { hint.textContent = '4x PNG (' + totalW + '×' + totalH + 'px) downloaded!'; }
+            };
+            chartImg.src = chartUrl;
+        }).catch(function(err) {
+            container.style.padding = origPadding;
+            if (kbBar) kbBar.style.display = '';
+            if (hint) { hint.textContent = 'Export failed: ' + err.message; }
+        });
+    }
+});
+</script>
+</body>
+</html>
