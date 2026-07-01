@@ -68,3 +68,6 @@ pip install pyswmm networkx
 - SWMM binary/model outputs (`.out`, `.rpt`), PyTorch checkpoints (`.pth`), PNG figures, PDF files, and pickle state files are included as artifacts.
 - S1 and S2 demonstrate data release alternatives: anonymized aggregation for lower-sensitivity data and synthetic generation for more sensitive hydraulic time series.
 - S5 demonstrates method-level open sourcing: when original industrial code cannot be released, the paper method can still be translated into an executable, inspectable research framework.
+
+## Keywords
+- https://github.com/sxLii/AquaGen/blob/master/keywords.html
