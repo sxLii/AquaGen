@@ -1,0 +1,9 @@
+Using device: cuda
+Generated 10000 domain points and 2000 boundary points
+/home/sxli/anaconda3/envs/torchPY312/lib/python3.12/site-packages/torch/autograd/graph.py:829: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:179.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+Training completed
+Prediction on grid computed
+Metrics: {'MAE': np.float32(0.004512485), 'RMSE': np.float32(0.0053409), 'Max_Abs_Error': np.float32(0.017544635)}
+Recovered gH: 0.979614, Recovered depth H: 0.099859 m
+Plot saved to results/solution_plot.png
